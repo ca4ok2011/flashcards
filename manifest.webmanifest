@@ -1,0 +1,15 @@
+{
+  "name": "flashcards-imba",
+  "short_name": "Карточки",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#2C4A3E",
+  "theme_color": "#2C4A3E",
+  "lang": "ru",
+  "icons": [
+    { "src": "icon.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
