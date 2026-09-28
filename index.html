@@ -5,11 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>flashcards-imba</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="apple-touch-icon" href="icon.png">
+<link rel="icon" href="favicon.png" sizes="32x32">
+<link rel="apple-touch-icon" href="icon-180.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Карточки">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#2C4A3E">
+<meta name="description" content="Карточки для изучения английского, немецкого и французского.">
 <style>
   :root{
     --board:#2C4A3E;
@@ -912,7 +915,7 @@ if('speechSynthesis' in window){
 // Контент (WORDS_*/QUOTES_*/EXAMPLES_*) — это код приложения, его можно менять когда угодно.
 // Прогресс — данные пользователя: он живёт отдельно, привязан к стабильным ID карточек
 // и НИКОГДА не перезаписывается при обновлении приложения.
-const APP_VERSION    = 'v144';
+const APP_VERSION    = 'v145';
 const SCHEMA_VERSION = 3;
 const OLD_TS = 1;   // «неизвестная древность»: метка для данных, перенесённых со старого формата
 
@@ -2885,8 +2888,15 @@ document.addEventListener('keydown', e => {
     b.classList.toggle('active', b.dataset.lvl === String(level));
   $('appVerLabel').textContent = APP_VERSION;
   try{
-    if('serviceWorker' in navigator && location.protocol.indexOf('http') === 0)
-      navigator.serviceWorker.register('./sw.js').catch(()=>{});
+    if('serviceWorker' in navigator && location.protocol.indexOf('http') === 0){
+      const reg = await navigator.serviceWorker.register('./sw.js').catch(()=>null);
+      if(reg){
+        // при каждом возврате в приложение проверяем, не вышла ли новая версия
+        document.addEventListener('visibilitychange', ()=>{
+          if(document.visibilityState === 'visible') reg.update().catch(()=>{});
+        });
+      }
+    }
   }catch(e){}
   renderMenu();
 })();

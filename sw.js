@@ -1,14 +1,19 @@
 // Service worker приложения «flashcards-imba».
-// Он кэширует ТОЛЬКО файлы приложения (index.html, манифест, иконка).
-// localStorage и IndexedDB service worker вообще не видит и никогда не трогает —
-// прогресс пользователя живёт там и обновлением приложения не задевается.
-const CACHE = 'fc-shell-v144';
-const SHELL = ['./', './index.html', './manifest.webmanifest', './icon.png'];
+//
+// Он кэширует ТОЛЬКО файлы приложения: страницу, манифест, иконки.
+// localStorage и IndexedDB, где лежит весь прогресс, service worker
+// не видит в принципе и никогда не трогает. Обновление приложения
+// не может задеть прогресс.
+const CACHE = 'fc-shell-v145';
+const SHELL = [
+  './', './index.html', './manifest.webmanifest',
+  './icon-192.png', './icon-512.png', './icon-maskable-512.png', './icon-180.png', './favicon.png'
+];
 
 self.addEventListener('install', e => {
   e.waitUntil((async () => {
     const c = await caches.open(CACHE);
-    // HTML тянем мимо HTTP-кэша браузера, чтобы не закэшировать старую сборку
+    // тянем мимо HTTP-кэша браузера, чтобы не закэшировать старую сборку
     await Promise.all(SHELL.map(u => c.add(new Request(u, { cache: 'no-cache' })).catch(() => {})));
     await self.skipWaiting();
   })());
@@ -31,12 +36,12 @@ self.addEventListener('fetch', e => {
   const isDoc = req.mode === 'navigate' || (req.headers.get('accept') || '').includes('text/html');
   e.respondWith((async () => {
     if (isDoc) {
-      // Страница: сначала сеть и всегда мимо кэша браузера — обновление приезжает сразу.
+      // Страница: сначала сеть и всегда мимо кэша браузера, чтобы новая
+      // версия приезжала сразу же. Кэш — только запасной вариант офлайн.
       try {
         const fresh = await fetch(new Request(req.url, { cache: 'no-cache' }));
         if (fresh && fresh.ok) {
-          const c = await caches.open(CACHE);
-          c.put('./index.html', fresh.clone());
+          (await caches.open(CACHE)).put('./index.html', fresh.clone());
           return fresh;
         }
       } catch (err) { }
@@ -48,6 +53,4 @@ self.addEventListener('fetch', e => {
   })());
 });
 
-self.addEventListener('message', e => {
-  if (e.data === 'skipWaiting') self.skipWaiting();
-});
+self.addEventListener('message', e => { if (e.data === 'skipWaiting') self.skipWaiting(); });
