@@ -4,7 +4,7 @@
 // localStorage и IndexedDB, где лежит весь прогресс, service worker
 // не видит в принципе и никогда не трогает. Обновление приложения
 // не может задеть прогресс.
-const CACHE = 'fc-shell-v145';
+const CACHE = 'fc-shell-v146';
 const SHELL = [
   './', './index.html', './manifest.webmanifest',
   './icon-192.png', './icon-512.png', './icon-maskable-512.png', './icon-180.png', './favicon.png'

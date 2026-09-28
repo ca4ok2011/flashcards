@@ -28,15 +28,23 @@
   }
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{height:100%}
+  html{background:var(--board)}
   body{
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
-    background:
-      radial-gradient(ellipse at 30% 20%, rgba(255,255,255,.05), transparent 55%),
-      radial-gradient(ellipse at 75% 85%, rgba(0,0,0,.2), transparent 60%),
-      var(--board);
+    background:transparent;
     color:var(--chalk);
     min-height:100dvh;
     overflow-x:hidden;
+  }
+  /* Фон: отдельный слой размером ровно в окно. Свет падает сверху, симметрично,
+     поэтому это читается как освещение доски, а не как пятно. */
+  body::before{
+    content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,0) 45%),
+      radial-gradient(130% 85% at 50% -10%, rgba(255,255,255,.035), transparent 65%),
+      radial-gradient(140% 95% at 50% 112%, rgba(0,0,0,.26), transparent 60%),
+      var(--board);
   }
 
   .view{position:relative;z-index:1;display:none;flex-direction:column;align-items:center;
@@ -324,8 +332,8 @@
   #confirmNo{background:rgba(34,41,59,.08);color:var(--ink)}
   #confirmNo:hover{background:rgba(34,41,59,.15)}
 
-  .app-copyright{position:fixed;left:0;right:0;bottom:6px;text-align:center;
-    font-size:11px;color:rgba(234,242,236,.35);pointer-events:none;z-index:2;letter-spacing:.02em}
+  .app-copyright{text-align:center;padding:22px 16px 18px;
+    font-size:11px;color:rgba(234,242,236,.35);letter-spacing:.02em}
   #addMsg.err{color:#F2A196}
 
   .filters{width:100%;display:flex;gap:8px;margin-bottom:10px}
@@ -382,7 +390,7 @@
   <!-- ================= ЭКРАН ТЕМ ================= -->
   <div class="view active" id="viewMenu">
     <div class="menu-title">Flashcards</div>
-    <div class="menu-sub">карточки для запоминания · 5 уровней по 1000 слов</div>
+    <div class="menu-sub">карточки для запоминания · 6 уровней, <span id="subTotal">5660</span> слов</div>
     <div class="levels" id="langs">
       <button data-lang="ru" class="active">🇬🇧 EN</button>
       <button data-lang="de">🇩🇪 DE</button>
@@ -915,7 +923,7 @@ if('speechSynthesis' in window){
 // Контент (WORDS_*/QUOTES_*/EXAMPLES_*) — это код приложения, его можно менять когда угодно.
 // Прогресс — данные пользователя: он живёт отдельно, привязан к стабильным ID карточек
 // и НИКОГДА не перезаписывается при обновлении приложения.
-const APP_VERSION    = 'v145';
+const APP_VERSION    = 'v146';
 const SCHEMA_VERSION = 3;
 const OLD_TS = 1;   // «неизвестная древность»: метка для данных, перенесённых со старого формата
 
@@ -1741,6 +1749,8 @@ function renderMenu(){
   $('writeLink').classList.toggle('hidden', !hasData); // игра «Напиши слово» — только когда есть данные
   $('editLink').style.display = showingFavorites ? '' : 'none'; // «Мои слова» показываем только в разделе Избранное
 
+  const st = $('subTotal');
+  if(st) st.textContent = WORDS.length;
   const op = overallProgress();
   const opPct = op.total ? Math.round(op.learned / op.total * 100) : 0;
   $('opPercent').textContent = opPct + '%';
