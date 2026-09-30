@@ -57,9 +57,27 @@
   .total-line{font-size:13px;color:var(--chalk-dim);margin-bottom:16px;text-align:center}
   .total-line b{color:var(--chalk)}
 
-  .levels{display:flex;gap:7px;margin-bottom:12px;flex-wrap:wrap}
-  .levels button{appearance:none;flex:1;min-width:56px;border:1.5px solid rgba(234,242,236,.35);
-    background:transparent;color:var(--chalk-dim);border-radius:12px;padding:9px 6px;
+  /* Языки: только флаги, без подписей */
+  .langs{display:flex;gap:7px;margin-bottom:12px;justify-content:center;flex-wrap:wrap}
+  .langs button{appearance:none;border:1.5px solid rgba(234,242,236,.3);background:transparent;
+    width:46px;height:40px;border-radius:12px;font-size:20px;line-height:1;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;transition:.18s}
+  .langs button:hover:not(:disabled){background:rgba(234,242,236,.1)}
+  .langs button.active{background:var(--chalk);border-color:var(--chalk)}
+  /* Недоступные языки: флаг остаётся узнаваемым, «выключенность» показывают
+     пунктирная рамка и приглушённость — сплошное обесцвечивание превращало
+     светлые флаги в неразличимые пятна на тёмном фоне. */
+  /* Недоступные языки: светлая подложка, чтобы флаг было видно, и пунктирная
+     рамка как знак «пока нельзя». Затемнять их на тёмном фоне бесполезно —
+     светлые флаги превращаются в неразличимые пятна. */
+  .langs button.soon{cursor:default;border-style:dashed;border-color:rgba(234,242,236,.22);
+    background:rgba(253,251,242,.13)}
+  .langs button.soon span{display:block;opacity:.75}
+
+  /* Уровни: ровно шесть, всегда в одну строку — min-width:0 не даёт им переноситься */
+  .levels{display:flex;gap:6px;margin-bottom:12px;width:100%}
+  .levels button{appearance:none;flex:1 1 0;min-width:0;border:1.5px solid rgba(234,242,236,.35);
+    background:transparent;color:var(--chalk-dim);border-radius:12px;padding:9px 2px;
     font:700 13px/1 inherit;letter-spacing:.03em;cursor:pointer;transition:.18s}
   .levels button:hover{background:rgba(234,242,236,.1);color:var(--chalk)}
   .levels button.active{background:var(--chalk);color:#22322B;border-color:var(--chalk)}
@@ -80,6 +98,8 @@
     transition:.18s;box-shadow:0 2px 8px rgba(0,0,0,.18)}
   .quotes-link button:hover{background:rgba(234,242,236,.24)}
   .quotes-link.hidden{display:none}
+  .quotes-link button.star-section{color:#FFD24C}
+  .quotes-link button.star-section.active{background:#FFD24C;color:#5C4400}
 
   .modes{display:flex;border:1.5px solid rgba(234,242,236,.45);border-radius:99px;overflow:hidden;margin-bottom:14px}
   .modes button{appearance:none;border:0;background:transparent;color:var(--chalk-dim);
@@ -135,10 +155,7 @@
   .write-feedback.ok{color:var(--know)}
   .write-feedback.bad{color:var(--accent)}
 
-  .menu-foot{margin-top:22px;display:flex;flex-direction:column;align-items:center;gap:8px}
-  .menu-foot button{appearance:none;border:0;background:transparent;color:var(--chalk-dim);
-    font:500 12px/1 inherit;cursor:pointer;text-decoration:underline;text-underline-offset:3px;padding:4px}
-  .menu-foot button:hover{color:var(--chalk)}
+
 
   /* ================= УЧЁБА ================= */
   .study-top{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px}
@@ -202,26 +219,21 @@
     80%{transform:scale(1.15) rotate(-5deg)}
     100%{transform:scale(1) rotate(0deg)}
   }
-  .battery-wrap{width:auto;display:flex;flex-direction:column;justify-content:center;
-    align-items:center;gap:4px;margin-bottom:14px}
-  .battery-svg{width:34px;height:56px;display:block;overflow:visible}
-  .batt-outline{fill:none;stroke:#eef2f0;stroke-width:3;transition:stroke .35s}
-  .batt-nub{fill:#eef2f0;transition:fill .35s}
-  .batt-seg{fill:rgba(255,255,255,.10);transition:fill .35s}
-  .batt-seg.lit{fill:var(--batt-color, #e74c3c)}
-  .battery-wrap.lvl-1 .batt-seg.lit{--batt-color:#e74c3c}
-  .battery-wrap.lvl-2 .batt-seg.lit{--batt-color:#f39c3d}
-  .battery-wrap.lvl-3 .batt-seg.lit{--batt-color:#f4d03f}
-  .battery-wrap.lvl-4 .batt-seg.lit{--batt-color:#8ee053}
-  .battery-wrap.lvl-5 .batt-seg.lit{--batt-color:#2ecc71}
-  .batt-label{font-size:11px;letter-spacing:.04em;color:var(--chalk-dim);font-weight:700;line-height:1}
-  .battery-wrap.lvl-0 .batt-label{color:var(--chalk-dim)}
-  .battery-wrap.lvl-5 .batt-label{color:#2ecc71}
-  .battery-wrap.pulse .battery-svg{animation:battPulse .5s ease}
+  /* Прогресс слова: полоска, наливается слева направо */
+  .word-prog{width:100%;max-width:520px;display:flex;align-items:center;gap:10px;margin:0 auto 14px}
+  .word-prog .wp-track{flex:1;height:10px;border-radius:99px;background:rgba(0,0,0,.28);
+    overflow:hidden;box-shadow:inset 0 1px 2px rgba(0,0,0,.25)}
+  .word-prog .wp-track i{display:block;height:100%;width:0;border-radius:99px;
+    background:linear-gradient(90deg,#5AAF7F,#7FC79B);transition:width .35s cubic-bezier(.4,0,.2,1)}
+  .word-prog.full .wp-track i{background:linear-gradient(90deg,#2ecc71,#8ee053)}
+  .word-prog .wp-label{font-size:11.5px;letter-spacing:.04em;color:var(--chalk-dim);
+    font-weight:700;line-height:1;min-width:38px;text-align:right;font-variant-numeric:tabular-nums}
+  .word-prog.full .wp-label{color:#8ee053}
+  .word-prog.pulse .wp-track{animation:battPulse .45s ease}
   @keyframes battPulse{
-    0%{transform:scale(1)}
-    40%{transform:scale(1.18)}
-    100%{transform:scale(1)}
+    0%{transform:scaleY(1)}
+    40%{transform:scaleY(1.7)}
+    100%{transform:scaleY(1)}
   }
   .example-ru{margin-top:6px;font-size:13.5px;color:var(--chalk-dim);font-style:italic;line-height:1.35}
   .hint-btn{appearance:none;border:1px dashed var(--ink-soft);background:transparent;color:var(--ink-soft);
@@ -332,6 +344,123 @@
   #confirmNo{background:rgba(34,41,59,.08);color:var(--ink)}
   #confirmNo:hover{background:rgba(34,41,59,.15)}
 
+  .gear-btn{position:absolute;top:14px;right:14px;z-index:5;appearance:none;border:0;cursor:pointer;
+    width:42px;height:42px;border-radius:13px;background:rgba(234,242,236,.12);color:var(--chalk);
+    font-size:19px;line-height:1;display:flex;align-items:center;justify-content:center;
+    transition:.18s;box-shadow:0 2px 8px rgba(0,0,0,.18)}
+  .gear-btn:hover{background:rgba(234,242,236,.24);transform:rotate(25deg)}
+
+  /* ================= НАСТРОЙКИ ================= */
+  .set-row{display:flex;gap:6px;flex-wrap:wrap}
+  .set-row button{appearance:none;cursor:pointer;font:600 14px/1 inherit;
+    border:1.5px solid rgba(234,242,236,.3);background:transparent;color:var(--chalk-dim);
+    border-radius:99px;padding:10px 16px;transition:.15s}
+  .set-row button:hover{background:rgba(234,242,236,.1);color:var(--chalk)}
+  .set-row button.sel{background:var(--chalk);color:#22322B;border-color:var(--chalk)}
+  .set-preview{display:flex;align-items:center;gap:10px;margin-top:12px}
+  .set-preview .wp-track{flex:1;height:10px;border-radius:99px;background:rgba(0,0,0,.28);overflow:hidden}
+  .set-preview .wp-track i{display:block;height:100%;width:0;border-radius:99px;
+    background:linear-gradient(90deg,#5AAF7F,#7FC79B);transition:width .3s}
+  .set-preview span{font-size:12px;color:var(--chalk-dim);min-width:118px}
+  .set-toggle{display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:9px 0;
+    font-size:14px;line-height:1.4;color:var(--chalk)}
+  .set-toggle input{appearance:none;flex:none;width:44px;height:25px;border-radius:99px;margin-top:1px;
+    background:rgba(234,242,236,.18);border:1.5px solid rgba(234,242,236,.3);position:relative;
+    cursor:pointer;transition:.2s}
+  .set-toggle input::after{content:"";position:absolute;top:2px;left:2px;width:17px;height:17px;
+    border-radius:50%;background:var(--chalk);transition:transform .2s}
+  .set-toggle input:checked{background:var(--know);border-color:var(--know)}
+  .set-toggle input:checked::after{transform:translateX(19px)}
+  #btnBackup{appearance:none;border:0;cursor:pointer;background:var(--know);color:#0C1B12;
+    font:600 15px/1 inherit;padding:13px 16px;border-radius:12px;transition:.15s;display:block;width:100%}
+  #btnBackup:hover{filter:brightness(1.1)}
+  #btnResetAll.danger{background:transparent;border:1.5px solid rgba(224,108,95,.5);color:#F2A39B;
+    border-radius:12px;padding:11px 16px;font:600 14px/1 inherit;cursor:pointer;margin-top:4px;
+    appearance:none;transition:.15s;display:block;width:100%;margin-top:10px}
+  #btnResetAll.danger:hover{background:rgba(224,108,95,.15);color:#fff}
+  body.wide .view{max-width:1000px}
+  body.wide .grid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
+
+  /* ================= ЦАРЬ ГОРЫ ================= */
+  .hill-body{width:100%;display:flex;flex-direction:column;gap:12px;
+    flex:1;justify-content:center;justify-content:safe center}
+  .hill-intro{color:var(--chalk-dim);font-size:13.5px;line-height:1.5;text-align:center}
+  .hill-presets{display:flex;flex-direction:column;gap:8px}
+  .hill-preset{appearance:none;cursor:pointer;text-align:left;display:flex;align-items:center;gap:12px;
+    background:rgba(253,251,242,.07);border:1.5px solid rgba(253,251,242,.14);border-radius:14px;
+    padding:12px 14px;color:var(--chalk);font:inherit;transition:.15s;position:relative}
+  .hill-preset:hover{background:rgba(253,251,242,.13)}
+  .hill-preset.sel{border-color:var(--know);background:rgba(90,175,127,.16)}
+  .hill-preset .hp-em{font-size:24px;flex:none}
+  .hill-preset .hp-txt{display:flex;flex-direction:column;gap:3px}
+  .hill-preset .hp-txt b{font-size:15px}
+  .hill-preset .hp-hint{font-size:12.5px;color:var(--chalk-dim);line-height:1.4}
+  .hill-best{margin-left:auto;font-size:11.5px;color:#FFD24C;white-space:nowrap;align-self:flex-start}
+  .hill-cefr,.hill-timer-pick{display:flex;gap:6px;align-items:center;justify-content:center;flex-wrap:wrap;
+    font-size:13px;color:var(--chalk-dim)}
+  .hill-cefr button,.hill-timer-pick button{appearance:none;cursor:pointer;font:inherit;font-size:13px;
+    border:1.5px solid rgba(234,242,236,.3);background:transparent;color:var(--chalk-dim);
+    border-radius:99px;padding:7px 14px;transition:.15s}
+  .hill-cefr button:hover,.hill-timer-pick button:hover{background:rgba(234,242,236,.1);color:var(--chalk)}
+  .hill-cefr button.sel,.hill-timer-pick button.sel{background:var(--chalk);color:#22322B;border-color:var(--chalk)}
+  .hill-poolinfo{text-align:center;font-size:12.5px;color:var(--chalk-dim)}
+  .hill-warn{text-align:center;font-size:13px;color:#F2C89B;line-height:1.5;
+    background:rgba(242,200,155,.1);border-radius:12px;padding:12px}
+  .hill-go{appearance:none;border:0;cursor:pointer;background:var(--know);color:#0C1B12;
+    font:700 17px/1 inherit;padding:16px;border-radius:14px;transition:.15s}
+  .hill-go:hover:not(:disabled){filter:brightness(1.1)}
+  .hill-go:disabled{background:rgba(253,251,242,.14);color:var(--chalk-dim);cursor:default}
+  .hill-head{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:14px}
+  .hill-head .hill-lvl b{font-size:18px}
+  .hill-head .hill-lives{font-size:15px;letter-spacing:2px}
+  .hill-head .hill-score{font-weight:700;font-size:18px;color:#FFD24C;font-variant-numeric:tabular-nums}
+  .hill-ladder{display:flex;gap:4px}
+  .hill-ladder i{flex:1;height:6px;border-radius:99px;background:rgba(0,0,0,.3)}
+  .hill-ladder i.hl-done{background:#7FC79B}
+  .hill-ladder i.hl-cur{background:#FFD24C}
+  .hill-timer{height:4px;border-radius:99px;background:rgba(0,0,0,.3);overflow:hidden}
+  .hill-timer i{display:block;height:100%;width:100%;background:#7FC79B;border-radius:99px}
+  .hill-timer i.low{background:var(--accent)}
+  .hill-q{background:var(--paper);border-radius:18px;padding:26px 20px;text-align:center;
+    display:flex;flex-direction:column;gap:12px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+  .hill-word{font-size:clamp(26px,7vw,36px);font-weight:700;color:var(--ink);word-break:break-word}
+  .hill-eq{font-size:13px;color:var(--ink-soft)}
+  .hill-shown{font-size:clamp(19px,5vw,25px);color:var(--ink);word-break:break-word}
+  .hill-yn{display:flex;gap:10px;margin-top:6px}
+  .hill-yn button{flex:1;appearance:none;border:0;cursor:pointer;font:700 17px/1 inherit;
+    padding:17px;border-radius:13px;color:#fff;transition:.12s}
+  .hill-yn .yes{background:var(--know)} .hill-yn .yes:hover{background:#478D68}
+  .hill-yn .no{background:var(--accent)} .hill-yn .no:hover{background:#E86E61}
+  .hill-opts{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+  .hill-opts button{appearance:none;cursor:pointer;font:600 16px/1.3 inherit;text-align:left;
+    padding:14px 16px;border-radius:12px;border:1.5px solid rgba(34,41,59,.18);
+    background:rgba(34,41,59,.04);color:var(--ink);transition:.12s}
+  .hill-opts button:hover{background:rgba(34,41,59,.1);border-color:rgba(34,41,59,.35)}
+  .hill-left{text-align:center;font-size:12.5px;color:var(--chalk-dim)}
+  .hill-flash{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:14px;z-index:200;pointer-events:none;font-size:80px;animation:hillPop .2s ease-out}
+  .hill-flash.ok{background:rgba(90,175,127,.3)}
+  .hill-flash.bad{background:rgba(224,108,95,.35)}
+  .hill-flash em{font-style:normal;font-size:19px;font-weight:600;color:#fff;text-align:center;
+    padding:0 24px;text-shadow:0 2px 10px rgba(0,0,0,.6)}
+  @keyframes hillPop{from{opacity:0}to{opacity:1}}
+  .hill-camp,.hill-result{background:rgba(253,251,242,.07);border-radius:18px;padding:30px 20px;
+    text-align:center;display:flex;flex-direction:column;gap:10px;align-items:center}
+  .hc-em,.hr-em{font-size:54px}
+  .hc-title,.hr-title{font-size:21px;font-weight:700}
+  .hc-sub,.hr-sub{font-size:13.5px;color:var(--chalk-dim)}
+  .hc-score,.hr-score{font-size:25px;font-weight:700;color:#FFD24C;font-variant-numeric:tabular-nums}
+  .hr-new{font-size:14px;font-weight:700;color:#7FC79B}
+  .hr-best{font-size:13px;color:var(--chalk-dim)}
+  .hr-tip{font-size:13px;color:var(--chalk-dim);font-style:italic}
+  .hill-result.won{background:rgba(255,210,76,.12)}
+  .hc-btns,.hr-btns{display:flex;gap:10px;margin-top:8px;width:100%}
+  .hill-camp button,.hr-btns button{flex:1;appearance:none;border:0;cursor:pointer;background:var(--know);
+    color:#0C1B12;font:700 16px/1 inherit;padding:15px;border-radius:13px;transition:.15s}
+  .hill-camp button:hover,.hr-btns button:hover{filter:brightness(1.1)}
+  .hr-btns .ghost{background:transparent;color:var(--chalk);border:1.5px solid rgba(234,242,236,.4)}
+  .hr-btns .ghost:hover{background:rgba(234,242,236,.12);filter:none}
+
   .app-copyright{text-align:center;padding:22px 16px 18px;
     font-size:11px;color:rgba(234,242,236,.35);letter-spacing:.02em}
   #addMsg.err{color:#F2A196}
@@ -389,12 +518,16 @@
 <body>
   <!-- ================= ЭКРАН ТЕМ ================= -->
   <div class="view active" id="viewMenu">
+    <button class="gear-btn" id="btnSettings" title="Настройки" aria-label="Настройки">⚙️</button>
     <div class="menu-title">Flashcards</div>
     <div class="menu-sub">карточки для запоминания · 6 уровней, <span id="subTotal">5660</span> слов</div>
-    <div class="levels" id="langs">
-      <button data-lang="ru" class="active">🇬🇧 EN</button>
-      <button data-lang="de">🇩🇪 DE</button>
-      <button data-lang="fr">🇫🇷 FR</button>
+    <div class="langs" id="langs">
+      <button data-lang="ru" class="active" title="Английский" aria-label="Английский">🇬🇧</button>
+      <button data-lang="de" title="Немецкий" aria-label="Немецкий">🇩🇪</button>
+      <button data-lang="fr" title="Французский" aria-label="Французский">🇫🇷</button>
+      <button class="soon" disabled title="Польский — скоро" aria-label="Польский, пока недоступен"><span>🇵🇱</span></button>
+      <button class="soon" disabled title="Итальянский — скоро" aria-label="Итальянский, пока недоступен"><span>🇮🇹</span></button>
+      <button class="soon" disabled title="Китайский — скоро" aria-label="Китайский, пока недоступен"><span>🇨🇳</span></button>
     </div>
     <div class="levels" id="levels">
       <button data-lvl="1" class="active" title="Elementary">A1</button>
@@ -403,7 +536,6 @@
       <button data-lvl="4" title="Upper-intermediate">B2</button>
       <button data-lvl="5" title="Advanced">C1</button>
       <button data-lvl="6" title="Proficiency">C2</button>
-      <button data-lvl="star" id="btnLvlStar" class="lvl-star" title="Избранное">★</button>
     </div>
     <div class="lang-switch" id="langSwitch" tabindex="0" role="button" aria-label="Переключить направление перевода">
       <span class="ls-side ls-en" id="lsSourceLabel">🇬🇧 EN</span>
@@ -417,6 +549,13 @@
       <div class="quotes-link" id="writeLink">
         <button id="btnWriteOpen" title="Напиши слово (RU → язык)">✍️</button>
       </div>
+      <div class="quotes-link" id="hillLink">
+        <button id="btnHill" title="Царь горы">⛰️</button>
+      </div>
+      <div class="quotes-link">
+        <button id="btnLvlStar" class="star-section" data-lvl="star" title="Избранное">★</button>
+      </div>
+
     </div>
     <div class="total-line">Уровень <b id="levelLabel">1</b> · режим <b id="modeLabel">ENG → RUS</b>: выучено <b id="totalLearned">0</b> из <b id="totalWords">0</b></div>
     <div class="overall-progress" id="overallProgress">
@@ -425,10 +564,7 @@
     </div>
     <div class="edit-link" id="editLink" style="display:none"><button id="btnEdit">📝 Мои слова: добавить / удалить</button></div>
     <div class="grid" id="grid"></div>
-    <div class="menu-foot">
-      <button id="btnBackup">💾 Сохранить / восстановить прогресс</button>
-      <button id="btnResetAll">Сбросить весь прогресс</button>
-    </div>
+
   </div>
 
   <!-- ================= ЭКРАН УЧЁБЫ ================= -->
@@ -442,17 +578,9 @@
       <span>Выучено: <b id="statLearned">0</b></span>
     </div>
     <main>
-      <div class="battery-wrap" id="batteryWrap" title="Прогресс освоения слова">
-        <svg class="battery-svg" id="batterySvg" viewBox="0 12 60 98" xmlns="http://www.w3.org/2000/svg">
-          <rect class="batt-nub" x="24" y="16" width="12" height="7" rx="2.5"></rect>
-          <rect class="batt-outline" x="7" y="22" width="46" height="84" rx="9"></rect>
-          <rect class="batt-seg" data-seg="1" x="13" y="27" width="34" height="12" rx="3"></rect>
-          <rect class="batt-seg" data-seg="2" x="13" y="42" width="34" height="12" rx="3"></rect>
-          <rect class="batt-seg" data-seg="3" x="13" y="57" width="34" height="12" rx="3"></rect>
-          <rect class="batt-seg" data-seg="4" x="13" y="72" width="34" height="12" rx="3"></rect>
-          <rect class="batt-seg" data-seg="5" x="13" y="87" width="34" height="12" rx="3"></rect>
-        </svg>
-        <span class="batt-label" id="battLabel">NEW</span>
+      <div class="word-prog" id="wordProg" title="Прогресс освоения слова">
+        <div class="wp-track"><i id="wpFill"></i></div>
+        <span class="wp-label" id="wpLabel">NEW</span>
       </div>
       <div class="scene" id="scene">
         <button class="star-btn" id="starBtnStudy" title="В избранное">★</button>
@@ -678,6 +806,51 @@
     </div>
   </div>
 
+  <!-- ================= НАСТРОЙКИ ================= -->
+  <div class="view" id="viewSettings">
+    <div class="edit-head">
+      <button class="back-btn" id="btnSetBack">← Темы</button>
+      <div class="edit-title">⚙️ Настройки</div>
+    </div>
+
+    <div class="panel">
+      <h3>Шаг прогресса</h3>
+      <p class="backup-hint">На сколько процентов заполняется полоска слова за одно нажатие «Знаю».
+        Уже накопленный прогресс не пострадает: слово на 60% останется на 60%.</p>
+      <div class="set-row" id="setStep"></div>
+      <div class="set-preview"><div class="wp-track"><i id="setStepBar"></i></div><span id="setStepTxt"></span></div>
+    </div>
+
+    <div class="panel">
+      <h3>Карточки</h3>
+      <label class="set-toggle"><input type="checkbox" id="setAutoSpeak"><span>Озвучивать слово сразу при показе карточки</span></label>
+      <label class="set-toggle"><input type="checkbox" id="setHintOpen"><span>Сразу показывать подсказку, не нажимая кнопку</span></label>
+      <label class="set-toggle"><input type="checkbox" id="setWide"><span>На широком экране использовать всю ширину</span></label>
+    </div>
+
+    <div class="panel">
+      <h3>Царь горы</h3>
+      <p class="backup-hint">Таймер на ответ. Время сжимается по мере подъёма.</p>
+      <div class="set-row" id="setHillTimer"></div>
+    </div>
+
+    <div class="panel">
+      <h3>Прогресс</h3>
+      <p class="backup-hint">Резервная копия, перенос на другое устройство и состояние хранилища.</p>
+      <button id="btnBackup">💾 Сохранить / восстановить прогресс</button>
+      <button id="btnResetAll" class="danger">Сбросить весь прогресс</button>
+    </div>
+  </div>
+
+  <!-- ================= ЦАРЬ ГОРЫ ================= -->
+  <div class="view" id="viewHill">
+    <div class="edit-head">
+      <button class="back-btn" id="btnHillBack">← Темы</button>
+      <div class="edit-title">⛰️ Царь горы</div>
+    </div>
+    <div id="hillBody" class="hill-body"></div>
+  </div>
+
   <!-- ================= РЕЗЕРВНАЯ КОПИЯ ПРОГРЕССА ================= -->
   <div class="view" id="viewBackup">
     <div class="edit-head">
@@ -812,16 +985,26 @@ let starredByLang   = { ru: new Set(), de: new Set(), fr: new Set() }; // изб
 
 let learned = learnedByLang[targetLang];   // раздельный прогресс для ENG→RUS и RUS→ENG (текущий язык)
 const LS = () => learned[mode]; // прогресс текущего режима: { [id]: knowCount 0-5 }
+// Прогресс слова хранится в процентах 0…100, а не в пяти ступенях.
+// Благодаря этому размер шага можно менять в настройках, и уже накопленный
+// прогресс не переписывается: слово на 60% останется на 60% при любом шаге.
+const STEP_CHOICES = [10, 20, 25, 50];   // сколько процентов даёт одно нажатие «Знаю»
+let autoSpeak = false;      // сама озвучивать слово при показе карточки
+let hintOpen = false;       // показывать подсказку сразу, не нажимая кнопку
+let wideLayout = false;     // на широком экране использовать всю ширину
+function applyWide(){ try{ document.body.classList.toggle('wide', wideLayout); }catch(e){} }
+const KNOW_MAX = 100;
+let stepPct = 20;                      // сколько добавляет одно нажатие «Знаю»
 function getKnow(id){ return LS()[id] || 0; }
 function setKnow(id, n){
-  n = Math.max(0, Math.min(5, Math.round(n)));
+  n = Math.max(0, Math.min(KNOW_MAX, Math.round(n)));
   if(n <= 0) delete LS()[id];
   else LS()[id] = n;
 }
-function isMastered(id){ return getKnow(id) >= 5; }
-function isMasteredIn(modeKey, id){ return (learned[modeKey][id] || 0) >= 5; }
+function isMastered(id){ return getKnow(id) >= KNOW_MAX; }
+function isMasteredIn(modeKey, id){ return (learned[modeKey][id] || 0) >= KNOW_MAX; }
 function setKnowIn(modeKey, id, n){
-  n = Math.max(0, Math.min(5, Math.round(n)));
+  n = Math.max(0, Math.min(KNOW_MAX, Math.round(n)));
   if(n <= 0) delete learned[modeKey][id];
   else learned[modeKey][id] = n;
 }
@@ -923,8 +1106,8 @@ if('speechSynthesis' in window){
 // Контент (WORDS_*/QUOTES_*/EXAMPLES_*) — это код приложения, его можно менять когда угодно.
 // Прогресс — данные пользователя: он живёт отдельно, привязан к стабильным ID карточек
 // и НИКОГДА не перезаписывается при обновлении приложения.
-const APP_VERSION    = 'v146';
-const SCHEMA_VERSION = 3;
+const APP_VERSION    = 'v150';
+const SCHEMA_VERSION = 5;
 const OLD_TS = 1;   // «неизвестная древность»: метка для данных, перенесённых со старого формата
 
 // Префикс ID = честное имя языка. Внутренний код 'ru' исторически означает английский,
@@ -986,11 +1169,13 @@ const customQuoteId = (code, text) => 'q:' + LANG_ID[code] + ':#' + hash8(String
 //   customQuotes:{...}, settings:{key:{v,t}}, stats:{days:{'ГГГГ-ММ-ДД':{n,t}}} }
 function emptyDoc(){
   return { schemaVersion: SCHEMA_VERSION, progress:{}, quotes:{}, customWords:{},
-           customQuotes:{}, settings:{}, stats:{ days:{} }, _seq:0 };
+           customQuotes:{}, settings:{}, stats:{ days:{} },
+           games:{ hill:{ records:{}, runs:0 } }, _seq:0 };
 }
 let DOC = emptyDoc();
 
 // ---- Слияние: по каждому полю отдельно, побеждает более свежая метка ----
+const MAX_FIELDS = new Set(['hc','he']);   // счётчики ответов в игре: только вверх
 function mergeRecord(a, b){
   if(!a) return b ? clone(b) : null;
   if(!b) return clone(a);
@@ -999,7 +1184,10 @@ function mergeRecord(a, b){
   for(const k of keys){
     const av = a[k], bv = b[k], at = ta[k] || 0, bt = tb[k] || 0;
     let v, vt;
-    if(av === undefined){ v = bv; vt = bt; }
+    if(MAX_FIELDS.has(k) && typeof av === 'number' && typeof bv === 'number'){
+      v = Math.max(av, bv); vt = Math.max(at, bt);
+    }
+    else if(av === undefined){ v = bv; vt = bt; }
     else if(bv === undefined){ v = av; vt = at; }
     else if((at === OLD_TS || bt === OLD_TS) && (k === 'er' || k === 're')
             && typeof av === 'number' && typeof bv === 'number'){
@@ -1044,6 +1232,21 @@ function mergeStats(a, b){
   const out = { ...clone(a), ...clone(b), days };
   return out;
 }
+function mergeGames(a, b){
+  a = a || {}; b = b || {};
+  const ha = (a.hill || {}), hb = (b.hill || {});
+  const ra = ha.records || {}, rb = hb.records || {}, rec = {};
+  for(const k of new Set([...Object.keys(ra), ...Object.keys(rb)])){
+    const x = ra[k] || {}, y = rb[k] || {};
+    rec[k] = { level: Math.max(x.level || 0, y.level || 0),
+               score: Math.max(x.score || 0, y.score || 0),
+               crown: Math.max(x.crown || 0, y.crown || 0),
+               t: Math.max(x.t || 0, y.t || 0) };
+  }
+  return { ...clone(a), ...clone(b),
+           hill: { ...clone(ha), ...clone(hb), records: rec,
+                   runs: Math.max(ha.runs || 0, hb.runs || 0) } };
+}
 function mergeDocs(a, b){
   if(!a) return b ? clone(b) : emptyDoc();
   if(!b) return clone(a);
@@ -1053,6 +1256,7 @@ function mergeDocs(a, b){
   for(const sec of ['progress','quotes','customWords','customQuotes']) out[sec] = mergeMap(a[sec], b[sec]);
   out.settings = mergeSettings(a.settings, b.settings);
   out.stats    = mergeStats(a.stats, b.stats);
+  out.games    = mergeGames(a.games, b.games);
   out._seq     = Math.max(a._seq || 0, b._seq || 0);
   return out;
 }
@@ -1073,6 +1277,17 @@ function migrateDoc(raw){
   if(!out.settings || typeof out.settings !== 'object') out.settings = {};
   if(!out.stats || typeof out.stats !== 'object') out.stats = { days:{} };
   if(!out.stats.days) out.stats.days = {};
+  if(!out.games || typeof out.games !== 'object') out.games = {};
+  if(!out.games.hill || typeof out.games.hill !== 'object') out.games.hill = { records:{}, runs:0 };
+  if(!out.games.hill.records) out.games.hill.records = {};
+  // Схема 5: прогресс слова переехал со ступеней 1–5 на проценты 0–100.
+  // Умножаем на 20 — «выучено» (5) становится 100%, ничего не теряется.
+  if(v > 0 && v < 5){
+    for(const id in out.progress){
+      const r = out.progress[id]; if(!r) continue;
+      for(const f of ['er','re']) if(r[f] > 0 && r[f] <= 5) r[f] = r[f] * 20;
+    }
+  }
   // версия < 3: записи могли быть без меток времени — проставляем «древнюю»,
   // чтобы любое реальное значение их перебило, но на пустом устройстве они применились
   if(v < 3){
@@ -1111,10 +1326,10 @@ function migrateLegacyKeys(){
   const parseProgress = s => {
     try{
       const p = JSON.parse(s);
-      if(Array.isArray(p)){ const o = {}; for(const i of p) if(Number.isInteger(i)) o[i] = 5; return o; }
+      if(Array.isArray(p)){ const o = {}; for(const i of p) if(Number.isInteger(i)) o[i] = 100; return o; }
       if(p && typeof p === 'object'){
         const o = {};
-        for(const k in p){ const n = parseInt(p[k], 10); if(n >= 1 && n <= 5) o[k] = n; }
+        for(const k in p){ const n = parseInt(p[k], 10); if(n >= 1 && n <= 5) o[k] = n * 20; }
         return o;
       }
     }catch(e){}
@@ -1396,6 +1611,14 @@ function applyDoc(doc){
     const r = S['level:' + L.code];
     if(r && r.v >= 1 && r.v <= LEVELS) levelByLang[L.code] = r.v;
   }
+  if(S['hill:preset'] && HILL_PRESETS.some(p => p.id === S['hill:preset'].v)) hillPreset = S['hill:preset'].v;
+  if(S['hill:cefr'] && S['hill:cefr'].v >= 1 && S['hill:cefr'].v <= LEVELS) hillCefr = S['hill:cefr'].v;
+  if(S['hill:timer'] && HILL_TIMERS[S['hill:timer'].v]) hillTimerMode = S['hill:timer'].v;
+  if(S.stepPct && STEP_CHOICES.indexOf(S.stepPct.v) >= 0) stepPct = S.stepPct.v;
+  if(S.autoSpeak) autoSpeak = !!S.autoSpeak.v;
+  if(S.hintOpen) hintOpen = !!S.hintOpen.v;
+  if(S.wide) wideLayout = !!S.wide.v;
+  applyWide();
   todayCount = ((doc.stats && doc.stats.days && doc.stats.days[todayKey()]) || {}).n || 0;
   repoint();
 }
@@ -1412,6 +1635,7 @@ function buildDoc(){
   doc.schemaVersion = SCHEMA_VERSION;
   for(const sec of ['progress','quotes','customWords','customQuotes']) doc[sec] = doc[sec] || {};
   doc.settings = doc.settings || {}; doc.stats = doc.stats || { days:{} }; doc.stats.days = doc.stats.days || {};
+  doc.games = doc.games || { hill:{ records:{}, runs:0 } };
 
   // метка времени ставится ТОЛЬКО когда значение реально изменилось
   const setF = (bag, id, f, val) => {
@@ -1477,7 +1701,8 @@ function buildDoc(){
   // либо она уже есть в документе, либо её значение отличается от заводского.
   // Иначе свежее устройство разослало бы всем свои значения по умолчанию
   // и затёрло то, что человек когда-то выставил.
-  const DEFAULTS = { mode:'ER', lang:'ru' };
+  const DEFAULTS = { mode:'ER', lang:'ru', 'hill:preset':'climb', 'hill:cefr':1, 'hill:timer':'soft',
+                     stepPct:20, autoSpeak:0, hintOpen:0, wide:0 };
   for(const L of LANGUAGES) DEFAULTS['level:' + L.code] = 1;
   const setS = (k, v) => {
     const r = doc.settings[k];
@@ -1486,6 +1711,9 @@ function buildDoc(){
     doc.settings[k] = { v, t: now };
   };
   setS('mode', mode); setS('lang', targetLang);
+  setS('hill:preset', hillPreset); setS('hill:cefr', hillCefr); setS('hill:timer', hillTimerMode);
+  setS('stepPct', stepPct); setS('autoSpeak', autoSpeak ? 1 : 0);
+  setS('hintOpen', hintOpen ? 1 : 0); setS('wide', wideLayout ? 1 : 0);
   for(const L of LANGUAGES) setS('level:' + L.code, levelByLang[L.code]);
 
   const dk = todayKey(), prev = doc.stats.days[dk] || { n:0, t:0 };
@@ -1708,8 +1936,8 @@ function legacyToDoc(data){
     const r = doc.progress[id] || (doc.progress[id] = { t:{} });
     r[f] = v; r.t[f] = OLD_TS;
   };
-  for(const i of erIds) if(Number.isInteger(i)) put(i, 'er', 5);
-  for(const i of reIds) if(Number.isInteger(i)) put(i, 're', 5);
+  for(const i of erIds) if(Number.isInteger(i)) put(i, 'er', 100);
+  for(const i of reIds) if(Number.isInteger(i)) put(i, 're', 100);
   for(const i of (data.hidden || [])) if(Number.isInteger(i)) put(i, 'hd', 1);
   if(data.level >= 1 && data.level <= LEVELS) doc.settings['level:' + code] = { v:data.level, t:OLD_TS };
   if(data.mode === 'ER' || data.mode === 'RE') doc.settings.mode = { v:data.mode, t:OLD_TS };
@@ -1803,6 +2031,10 @@ function showView(name){
   $('viewEdit').classList.toggle('active', name === 'edit');
   $('viewQEdit').classList.toggle('active', name === 'qedit');
   $('viewBackup').classList.toggle('active', name === 'backup');
+  $('viewHill').classList.toggle('active', name === 'hill');
+  $('viewSettings').classList.toggle('active', name === 'settings');
+  if(name === 'settings') renderSettings();
+  if(name !== 'hill'){ hillStopTimer(); hillRun = null; hillBusy = false; }
   if(name === 'menu'){ theme = -1; renderMenu(); }
   if(name === 'edit'){ theme = -1; renderList(); }
   if(name === 'qedit'){ qEditPage = 0; renderQuoteList(); }
@@ -1886,8 +2118,8 @@ function render(){
   const hasQuote = !!w.quote;
   const hasEx = hasQuote || !!w.ex;
   $('btnHint').textContent = hasQuote ? '💡 Подсказка: цитата' : '💡 Подсказка: пример';
-  $('btnHint').style.display = (frontIsEn && hasEx) ? '' : 'none';
-  $('frontExample').style.display = 'none';
+  $('btnHint').style.display = (frontIsEn && hasEx && !hintOpen) ? '' : 'none';
+  $('frontExample').style.display = (frontIsEn && hasEx && hintOpen) ? '' : 'none';
   if(hasQuote){
     $('frontExample').innerHTML = highlightQuote(w.quote, w.quoteMatch) +
       `<div class="quote-hint-attr">(с) <i>${escHtml(w.quoteChar)}</i> — ${escHtml(w.quoteMovie)}</div>`;
@@ -1934,6 +2166,10 @@ function showCard(){
   card.style.transform = '';
   setFace(false);
   render();
+  if(autoSpeak && mode === 'ER' && deck.length){
+    const w = getW(deck[pos]);
+    if(w) speak(w.en);
+  }
 }
 
 // ================= ДЕЙСТВИЯ =================
@@ -1967,11 +2203,11 @@ function next(){
 function knowStep(){
   if(deck.length === 0) return;
   const id = deck[pos];
-  const n = getKnow(id) + 1;
+  const n = Math.min(KNOW_MAX, getKnow(id) + stepPct);
   setKnow(id, n);
   bumpToday();
-  animateBattery(n >= 5 ? 5 : n);
-  if(n >= 5){
+  animateBattery(n);
+  if(n >= KNOW_MAX){
     deck.splice(pos, 1);
     if(pos >= deck.length) pos = 0;
   } else {
@@ -1984,9 +2220,9 @@ function knowStep(){
 function masterWord(){
   if(deck.length === 0) return;
   const id = deck[pos];
-  setKnow(id, 5);
+  setKnow(id, KNOW_MAX);
   bumpToday();
-  animateBattery(5);
+  animateBattery(KNOW_MAX);
   deck.splice(pos, 1);
   if(pos >= deck.length) pos = 0;
   saveAll();
@@ -1995,7 +2231,8 @@ function masterWord(){
 function setMode(m){
   mode = m;
   $('langSwitch').classList.toggle('re', m === 'RE');
-  $('quotesLink').classList.toggle('hidden', !LANG_QUOTES[targetLang] || LANG_QUOTES[targetLang].length === 0); // цитаты доступны, если есть пак для языка
+  $('quotesLink').classList.toggle('hidden', !LANG_QUOTES[targetLang] || LANG_QUOTES[targetLang].length === 0);
+  $('hillLink').classList.toggle('hidden', targetLang !== 'ru');   // «Царь горы» пока только для английского // цитаты доступны, если есть пак для языка
   saveAll();
   renderMenu(); // у каждого режима свой прогресс — обновляем цифры
 }
@@ -2040,24 +2277,31 @@ function setLang(code){
   for(const b of document.querySelectorAll('#levels button'))
     b.classList.toggle('active', b.dataset.lvl === String(level));
   $('quotesLink').classList.toggle('hidden', !LANG_QUOTES[targetLang] || LANG_QUOTES[targetLang].length === 0);
+  $('hillLink').classList.toggle('hidden', targetLang !== 'ru');   // «Царь горы» пока только для английского
   fillCatSelects(); // темы редактора слов теперь свои для этого языка
   saveAll();
   renderMenu();
+}
+// Кнопка «Избранное» переехала к разделам, поэтому подсветку ряда уровней
+// и звезды держим в одном месте.
+function paintLevelButtons(){
+  for(const b of document.querySelectorAll('#levels button'))
+    b.classList.toggle('active', !showingFavorites && b.dataset.lvl === String(level));
+  const st = $('btnLvlStar');
+  if(st) st.classList.toggle('active', showingFavorites);
 }
 function setLevel(n){
   if(n < 1 || n > LEVELS) return;
   level = n;
   levelByLang[targetLang] = n;
   showingFavorites = false;
-  for(const b of document.querySelectorAll('#levels button'))
-    b.classList.toggle('active', b.dataset.lvl === String(n));
+  paintLevelButtons();
   saveAll();
   renderMenu(); // каждый уровень — свои слова
 }
 function showFavoritesLevel(){
   showingFavorites = true;
-  for(const b of document.querySelectorAll('#levels button'))
-    b.classList.toggle('active', b.dataset.lvl === 'star');
+  paintLevelButtons();
   renderMenu(); // избранное — свои + отмеченные звездой слова, вне уровней
 }
 function resetTheme(){
@@ -2096,21 +2340,17 @@ function speakCurrent(){
   if(w) speak(w.en);
 }
 // Рисует батарейку под конкретный уровень (0-5), без анимации — просто синхронизирует вид
-function paintBattery(n){
-  const wrap = $('batteryWrap');
-  wrap.classList.remove('lvl-0','lvl-1','lvl-2','lvl-3','lvl-4','lvl-5');
-  wrap.classList.add('lvl-' + n);
-  // сегменты пронумерованы 1(верх)…5(низ) — заполняем снизу вверх, как на обычной иконке батарейки
-  for(let s = 1; s <= 5; s++){
-    const seg = document.querySelector(`.batt-seg[data-seg="${s}"]`);
-    if(seg) seg.classList.toggle('lit', s >= 6 - n);
-  }
-  $('battLabel').textContent = n <= 0 ? 'NEW' : (n * 20) + '%';
+// Полоска наливается слева направо на величину шага из настроек.
+function paintBattery(pct){
+  pct = Math.max(0, Math.min(KNOW_MAX, pct));
+  $('wpFill').style.width = pct + '%';
+  $('wordProg').classList.toggle('full', pct >= KNOW_MAX);
+  $('wpLabel').textContent = pct <= 0 ? 'NEW' : pct + '%';
 }
 // Мгновенно перекрашивает батарейку и запускает пульсацию — вызывается сразу по клику на действие,
 // ещё до того как карточка сменится (даёт мгновенный визуальный отклик)
 function animateBattery(n){
-  const wrap = $('batteryWrap');
+  const wrap = $('wordProg');
   paintBattery(n);
   wrap.classList.remove('pulse');
   void wrap.offsetWidth; // форсирую reflow, чтобы анимация перезапускалась при повторных кликах
@@ -2223,7 +2463,7 @@ function writeAction(){
 function knowWrite(){
   if(writeDeck.length === 0) return;
   const id = writeDeck[writePos];
-  learned.RE[id] = 5;
+  learned.RE[id] = KNOW_MAX;
   bumpToday();
   saveAll();
   writeDeck.splice(writePos, 1);
@@ -2658,6 +2898,431 @@ function renderList(){
 function wGoPrev(){ if(wEditPage > 0){ wEditPage--; renderList(); } }
 function wGoNext(){ wEditPage++; renderList(); }
 
+
+// ================= ЦАРЬ ГОРЫ =================
+// 10 уровней по 10 слов. Три жизни, без поблажек. Уровни 1-5 — «верно/неверно»,
+// 6-10 — четыре варианта. Пока только английский.
+const HILL_LEVELS = 10, HILL_PER_LEVEL = 10, HILL_LIVES = 3;
+const HILL_MIN_POOL = 100;              // меньше сотни слов — горы не выйдет
+
+const HILL_PRESETS = [
+  { id:'warmup',   name:'Разминка',      emoji:'🌤',  hint:'Только изученные слова. Мягкий подъём тем, что уже знаешь.' },
+  { id:'level',    name:'Один уровень',  emoji:'🎯', hint:'Выбираешь A1…C2 — и вся гора строится внутри него.', needsLevel:true },
+  { id:'climb',    name:'Восхождение',   emoji:'⛰',  hint:'Вся база. Внизу простое, на вершине C2.' },
+  { id:'weak',     name:'Слабые места',  emoji:'🩹', hint:'Изученные слова, но наверху то, где ты спотыкался.' },
+  { id:'hardcore', name:'Хардкор',       emoji:'💀', hint:'Только B2–C2. Вся гора из тяжёлых слов, без разминки.' }
+];
+
+// Таймер: время сжимается по мере подъёма. Отдельно на «верно/неверно» и на 4 варианта.
+const HILL_TIMERS = {
+  off:  { name:'Выкл',    yn:[0,0],    mc:[0,0] },
+  soft: { name:'Мягкий',  yn:[8,6],    mc:[14,10] },
+  hard: { name:'Жёсткий', yn:[5,3.5],  mc:[9,6] }
+};
+
+// ---- Сложность слова ----
+const HILL_ABSTR = /(tion|sion|ment|ness|ity|ance|ence|ious|eous|ous|ive|ical|ism|ist|ature|itude)$/;
+const RU2LAT = {'а':'a','б':'b','в':'v','г':'g','д':'d','е':'e','ё':'e','ж':'zh','з':'z','и':'i','й':'y',
+'к':'k','л':'l','м':'m','н':'n','о':'o','п':'p','р':'r','с':'s','т':'t','у':'u','ф':'f','х':'h',
+'ц':'ts','ч':'ch','ш':'sh','щ':'sch','ъ':'','ы':'y','ь':'','э':'e','ю':'yu','я':'ya'};
+function hillCognate(en, ru){
+  const a = en.toLowerCase().replace(/[^a-z]/g,'');
+  let b = ''; for(const c of ru.split(',')[0].trim().toLowerCase()) b += (RU2LAT[c] !== undefined ? RU2LAT[c] : c);
+  if(a.length < 4 || b.length < 4) return false;
+  const n = Math.min(a.length, b.length, 5);
+  let same = 0; for(let i = 0; i < n; i++) if(a[i] === b[i]) same++;
+  return same >= 4;
+}
+// Лексическая сложность: основа — уровень CEFR, дальше мелкие признаки.
+function hillWordScore(i){
+  const w = WORDS_EN[i]; if(!w) return 0;
+  const [en, ru, , lvl] = w;
+  let s = (lvl - 1) / 5 * 0.62;
+  s += Math.min(Math.max((en.length - 4) / 10, 0), 1) * 0.12;
+  s += Math.min((ru.split(',').length - 1) / 3, 1) * 0.08;
+  if(HILL_ABSTR.test(en.toLowerCase())) s += 0.07;
+  if(en.trim().indexOf(' ') >= 0) s += 0.06;
+  if(QUOTE_HINTS_EN[en]) s -= 0.07;          // слово из киноцитаты — значит ходовое
+  if(hillCognate(en, ru)) s -= 0.09;         // computer / компьютер
+  return Math.max(0, Math.min(1, s));
+}
+// Личная сложность: чем хуже знаешь и чем чаще ошибался в игре, тем выше слово на горе.
+// Внутри одного уровня CEFR лексические признаки почти не работают (длина слова
+// к трудности отношения не имеет), поэтому для «своих» слов считаем по себе.
+function hillPersonalScore(i){
+  const st = learnedByLang.ru;
+  const know = Math.max(st.ER[i] || 0, st.RE[i] || 0) / KNOW_MAX * 5;   // 0…5 из процентов
+  const id = WORD_ID_BY_IDX.ru[i];
+  const rec = (DOC.progress && DOC.progress[id]) || {};
+  const err = rec.he || 0, ok = rec.hc || 0;
+  const rate = (err + ok) >= 3 ? err / (err + ok) : null;    // доля ошибок, если статистики хватает
+  let s = know > 0 ? (5 - know) / 5 * 0.55 : 0.55;
+  if(rate !== null) s += rate * 0.35;
+  else s += hillWordScore(i) * 0.25;                         // статистики нет — берём лексическую
+  return Math.max(0, Math.min(1, s));
+}
+
+// ---- Набор слов для выбранной сложности ----
+function hillPool(preset, cefr){
+  const st = learnedByLang.ru, hid = hiddenByLang.ru;
+  const studied = i => (st.ER[i] || 0) > 0 || (st.RE[i] || 0) > 0;
+  const out = [];
+  for(let i = 0; i < WORDS_EN.length; i++){
+    if(hid.has(i)) continue;
+    const lvl = WORDS_EN[i][3];
+    if(preset === 'warmup' || preset === 'weak'){ if(studied(i)) out.push(i); }
+    else if(preset === 'level'){ if(lvl === cefr) out.push(i); }
+    else if(preset === 'hardcore'){ if(lvl >= 4) out.push(i); }
+    else out.push(i);
+  }
+  return out;
+}
+// Гора: пул сортируется по сложности и режется на 10 равных частей.
+// Уровень — это не абсолютная метка, а десятая доля именно этого набора,
+// поэтому «только A1» честно даёт гору внутри A1.
+function hillTiers(pool, preset){
+  const personal = (preset === 'warmup' || preset === 'weak');
+  const scored = pool.map(i => [personal ? hillPersonalScore(i) : hillWordScore(i), i]);
+  scored.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  const per = Math.floor(scored.length / HILL_LEVELS), tiers = [];
+  for(let t = 0; t < HILL_LEVELS; t++){
+    const from = t * per, to = (t === HILL_LEVELS - 1) ? scored.length : (t + 1) * per;
+    tiers.push(scored.slice(from, to).map(x => x[1]));
+  }
+  return tiers;
+}
+
+// ---- Варианты ответа ----
+// В базе 927 русских переводов встречаются больше чем у одного слова
+// («получать», «цель», «быстрый»…). Если набирать варианты случайно, регулярно
+// выпадет вопрос с двумя верными ответами. Поэтому сверяем по словам перевода.
+function ruParts(s){
+  return new Set(String(s).toLowerCase().split(/[,;()]/).map(x => x.trim()).filter(x => x.length > 1));
+}
+function ruClash(a, b){
+  const A = ruParts(a), B = ruParts(b);
+  for(const x of A) if(B.has(x)) return true;
+  return false;
+}
+function hillPickDistractors(correctIdx, tierIds, n){
+  const right = WORDS_EN[correctIdx];
+  const near = tierIds.filter(i => i !== correctIdx && !ruClash(WORDS_EN[i][1], right[1]));
+  // сначала пробуем ту же тему — так вопрос честнее и интереснее
+  const same = near.filter(i => WORDS_EN[i][2] === right[2]);
+  const bag = [], seen = [right[1]];
+  const take = list => {
+    const sh = shuffle(list.slice());
+    for(const i of sh){
+      if(bag.length >= n) break;
+      if(seen.some(t => ruClash(t, WORDS_EN[i][1]))) continue;
+      bag.push(i); seen.push(WORDS_EN[i][1]);
+    }
+  };
+  take(same); take(near);
+  if(bag.length < n){                                  // совсем редкий случай — добираем по всей базе
+    const all = [];
+    for(let i = 0; i < WORDS_EN.length; i++) if(i !== correctIdx) all.push(i);
+    take(all);
+  }
+  return bag;
+}
+
+// ---- Состояние забега ----
+let hillRun = null;
+let hillTimerId = null, hillDeadline = 0, hillQuestion = null;
+let hillBusy = false;     // пока показывается «верно/мимо», новые ответы не принимаются
+let hillPreset = 'climb', hillCefr = 1, hillTimerMode = 'soft';
+
+function hillSecondsFor(level, kind){
+  const t = HILL_TIMERS[hillTimerMode]; if(!t) return 0;
+  const [a, b] = (kind === 'yn') ? t.yn : t.mc;
+  if(!a) return 0;
+  const from = (kind === 'yn') ? 1 : 6, to = (kind === 'yn') ? 5 : 10;
+  const k = (level - from) / (to - from);
+  return a + (b - a) * Math.max(0, Math.min(1, k));
+}
+function hillRecordKey(preset, cefr){ return preset === 'level' ? ('level:' + cefr) : preset; }
+function hillRecord(preset, cefr){
+  const g = (DOC.games && DOC.games.hill && DOC.games.hill.records) || {};
+  return g[hillRecordKey(preset, cefr)] || null;
+}
+
+function hillStart(){
+  hillBusy = false;
+  const pool = hillPool(hillPreset, hillCefr);
+  if(pool.length < HILL_MIN_POOL){ hillRenderSetup(); return; }
+  const tiers = hillTiers(pool, hillPreset);
+  const deck = tiers.map(t => shuffle(t.slice()).slice(0, HILL_PER_LEVEL));
+  hillRun = {
+    preset: hillPreset, cefr: hillCefr, tiers,
+    deck, level: 1, idx: 0, lives: HILL_LIVES, score: 0, streak: 0, best: 0,
+    answered: 0, correct: 0
+  };
+  showView('hill');
+  hillNextQuestion();
+}
+function hillEnd(won){
+  hillStopTimer(); hillBusy = false;
+  const r = hillRun; if(!r) return;
+  const reached = won ? HILL_LEVELS : r.level;
+  if(won) r.score = Math.round(r.score * 2);          // полный подъём удваивает итог
+  // рекорд: и уровень, и очки сливаются максимумом — это счётчики, а не «последний записавший»
+  DOC.games = DOC.games || {}; DOC.games.hill = DOC.games.hill || { records:{}, runs:0 };
+  const key = hillRecordKey(r.preset, r.cefr), now = Date.now();
+  const cur = DOC.games.hill.records[key] || {};
+  const rec = { level: Math.max(cur.level || 0, reached), score: Math.max(cur.score || 0, r.score),
+                crown: (cur.crown || 0) || (won ? 1 : 0), t: now };
+  const beatLevel = reached > (cur.level || 0), beatScore = r.score > (cur.score || 0);
+  DOC.games.hill.records[key] = rec;
+  DOC.games.hill.runs = (DOC.games.hill.runs || 0) + 1;
+  saveAll();
+  const finalScore = r.score;
+  hillRun = null;
+  hillRenderResult(won, reached, beatLevel, beatScore, finalScore);
+}
+
+function hillNextQuestion(){
+  const r = hillRun; if(!r) return;
+  if(r.idx >= r.deck[r.level - 1].length){        // уровень взят
+    if(r.level >= HILL_LEVELS){ hillEnd(true); return; }
+    r.score += 50 * r.level;
+    r.level++; r.idx = 0;
+    hillBusy = false;
+    hillRenderCamp();
+    return;
+  }
+  const wordIdx = r.deck[r.level - 1][r.idx];
+  const w = WORDS_EN[wordIdx];
+  const yn = r.level <= 5;
+  if(yn){
+    // половина вопросов — с подменённым переводом
+    const truthful = Math.random() < 0.5;
+    let shown = w[1];
+    if(!truthful){
+      const d = hillPickDistractors(wordIdx, r.tiers[r.level - 1], 1);
+      if(d.length) shown = WORDS_EN[d[0]][1]; else shown = w[1];
+    }
+    hillQuestion = { kind:'yn', wordIdx, en:w[0], shown, truthful: shown === w[1] };
+  } else {
+    const d = hillPickDistractors(wordIdx, r.tiers[r.level - 1], 3);
+    const opts = shuffle([w[1], ...d.map(i => WORDS_EN[i][1])]);
+    hillQuestion = { kind:'mc', wordIdx, en:w[0], opts, right:w[1] };
+  }
+  hillBusy = false;
+  hillRenderQuestion();
+}
+
+function hillAnswer(ok){
+  const r = hillRun, q = hillQuestion;
+  if(!r || !q || hillBusy) return;
+  hillBusy = true;
+  hillStopTimer();
+  // копим статистику по слову — на ней потом строится «Слабые места»
+  const id = WORD_ID_BY_IDX.ru[q.wordIdx];
+  DOC.progress = DOC.progress || {};
+  const rec = DOC.progress[id] || (DOC.progress[id] = { t:{} });
+  rec.t = rec.t || {};
+  const f = ok ? 'hc' : 'he';
+  rec[f] = (rec[f] || 0) + 1; rec.t[f] = Date.now();
+
+  r.answered++;
+  if(ok){
+    r.correct++; r.streak++;
+    let mult = r.streak >= 20 ? 2 : (r.streak >= 10 ? 1.5 : 1);
+    let pts = 10 * r.level * mult;
+    if(hillTimerMode !== 'off' && hillDeadline) pts += Math.max(0, Math.round((hillDeadline - Date.now()) / 500));
+    r.score += Math.round(pts);
+    r.idx++;
+    hillRenderFeedback(true, () => hillNextQuestion());
+  } else {
+    r.streak = 0; r.lives--;
+    r.deck[r.level - 1].push(r.deck[r.level - 1][r.idx]);   // слово вернётся в конец уровня
+    r.idx++;
+    if(r.lives <= 0){ hillRenderFeedback(false, () => hillEnd(false)); return; }
+    hillRenderFeedback(false, () => hillNextQuestion());
+  }
+  saveAll();
+}
+function hillStopTimer(){ if(hillTimerId){ clearInterval(hillTimerId); hillTimerId = null; } hillDeadline = 0; }
+function hillStartTimer(sec){
+  hillStopTimer();
+  const bar = $('hillTimerBar');
+  if(!sec){ if(bar) bar.parentElement.style.display = 'none'; return; }
+  bar.parentElement.style.display = '';
+  const total = sec * 1000;
+  hillDeadline = Date.now() + total;
+  hillTimerId = setInterval(() => {
+    const left = hillDeadline - Date.now();
+    const pct = Math.max(0, left / total * 100);
+    bar.style.width = pct + '%';
+    bar.classList.toggle('low', pct < 30);
+    if(left <= 0){ hillStopTimer(); hillAnswer(false); }
+  }, 50);
+}
+
+// ---- Экраны «Царя горы» ----
+function hillOpen(){
+  hillRun = null; hillStopTimer();
+  showView('hill');
+  hillRenderSetup();
+}
+function hillRenderSetup(){
+  const box = $('hillBody');
+  const rows = HILL_PRESETS.map(p => {
+    const rec = hillRecord(p.id, hillCefr);
+    const sel = p.id === hillPreset;
+    const best = rec ? `<span class="hill-best">${rec.crown ? '👑 ' : ''}рекорд: ${rec.level}/10${rec.score ? ' · ' + rec.score : ''}</span>` : '';
+    return `<button class="hill-preset${sel ? ' sel' : ''}" data-preset="${p.id}">
+      <span class="hp-em">${p.emoji}</span>
+      <span class="hp-txt"><b>${p.name}</b><span class="hp-hint">${p.hint}</span></span>
+      ${best}
+    </button>`;
+  }).join('');
+  const cefrRow = hillPreset === 'level'
+    ? `<div class="hill-cefr">${['A1','A2','B1','B2','C1','C2'].map((n, i) =>
+        `<button data-cefr="${i + 1}" class="${hillCefr === i + 1 ? 'sel' : ''}">${n}</button>`).join('')}</div>`
+    : '';
+  const timerRow = `<div class="hill-timer-pick">Таймер:
+    ${Object.keys(HILL_TIMERS).map(k => `<button data-timer="${k}" class="${hillTimerMode === k ? 'sel' : ''}">${HILL_TIMERS[k].name}</button>`).join('')}
+  </div>`;
+  const pool = hillPool(hillPreset, hillCefr).length;
+  const warn = pool < HILL_MIN_POOL
+    ? `<div class="hill-warn">В этом наборе ${pool} ${plural(pool, 'слово', 'слова', 'слов')} — для горы нужно минимум ${HILL_MIN_POOL}.
+       ${(hillPreset === 'warmup' || hillPreset === 'weak')
+          ? 'Поучи ещё немного слов, и режим откроется.'
+          : 'Выбери другую сложность.'}</div>`
+    : `<div class="hill-poolinfo">В наборе ${pool} ${plural(pool, 'слово', 'слова', 'слов')} · 10 уровней по 10 · 3 жизни</div>`;
+  box.innerHTML = `
+    <div class="hill-intro">Поднимись на 10 уровней. Уровни 1–5 — «верно / неверно», с шестого — четыре варианта.
+      Три ошибки, и забег окончен.</div>
+    <div class="hill-presets">${rows}</div>
+    ${cefrRow}${timerRow}${warn}
+    <button id="hillGo" class="hill-go"${pool < HILL_MIN_POOL ? ' disabled' : ''}>▶ В гору</button>`;
+  box.querySelectorAll('[data-preset]').forEach(b => b.addEventListener('click', () => { hillPreset = b.dataset.preset; hillRenderSetup(); }));
+  box.querySelectorAll('[data-cefr]').forEach(b => b.addEventListener('click', () => { hillCefr = +b.dataset.cefr; hillRenderSetup(); }));
+  box.querySelectorAll('[data-timer]').forEach(b => b.addEventListener('click', () => { hillTimerMode = b.dataset.timer; hillRenderSetup(); }));
+  const go = $('hillGo'); if(go) go.addEventListener('click', hillStart);
+}
+function plural(n, a, b, c){
+  const n10 = n % 10, n100 = n % 100;
+  if(n10 === 1 && n100 !== 11) return a;
+  if(n10 >= 2 && n10 <= 4 && (n100 < 10 || n100 >= 20)) return b;
+  return c;
+}
+function hillHead(){
+  const r = hillRun;
+  const alive = Math.max(0, Math.min(HILL_LIVES, r.lives));
+  const hearts = '❤️'.repeat(alive) + '🖤'.repeat(HILL_LIVES - alive);
+  const steps = Array.from({ length: HILL_LEVELS }, (_, i) =>
+    `<i class="${i + 1 < r.level ? 'hl-done' : (i + 1 === r.level ? 'hl-cur' : '')}"></i>`).join('');
+  return `<div class="hill-head">
+      <div class="hill-lvl">Уровень <b>${r.level}</b> / ${HILL_LEVELS}</div>
+      <div class="hill-lives">${hearts}</div>
+      <div class="hill-score">${r.score}</div>
+    </div>
+    <div class="hill-ladder">${steps}</div>
+    <div class="hill-timer"><i id="hillTimerBar"></i></div>`;
+}
+function hillRenderQuestion(){
+  const r = hillRun, q = hillQuestion;
+  const left = r.deck[r.level - 1].length - r.idx;
+  let body;
+  if(q.kind === 'yn'){
+    body = `<div class="hill-word">${escHtml(q.en)}</div>
+      <div class="hill-eq">это</div>
+      <div class="hill-shown">${escHtml(q.shown)}</div>
+      <div class="hill-yn">
+        <button id="hillNo" class="no">✗ Неверно</button>
+        <button id="hillYes" class="yes">✓ Верно</button>
+      </div>`;
+  } else {
+    body = `<div class="hill-word">${escHtml(q.en)}</div>
+      <div class="hill-opts">${q.opts.map((o, i) => `<button data-opt="${i}">${escHtml(o)}</button>`).join('')}</div>`;
+  }
+  $('hillBody').innerHTML = hillHead() + `<div class="hill-q">${body}</div>
+    <div class="hill-left">осталось на уровне: ${left}</div>`;
+  if(q.kind === 'yn'){
+    $('hillYes').addEventListener('click', () => hillAnswer(q.truthful));
+    $('hillNo').addEventListener('click', () => hillAnswer(!q.truthful));
+  } else {
+    $('hillBody').querySelectorAll('[data-opt]').forEach(b =>
+      b.addEventListener('click', () => hillAnswer(q.opts[+b.dataset.opt] === q.right)));
+  }
+  hillStartTimer(hillSecondsFor(r.level, q.kind));
+}
+function hillRenderFeedback(ok, next){
+  const q = hillQuestion;
+  const right = WORDS_EN[q.wordIdx][1];
+  const box = document.createElement('div');
+  box.className = 'hill-flash ' + (ok ? 'ok' : 'bad');
+  box.innerHTML = ok
+    ? `<span>✓</span>`
+    : `<span>✗</span><em>${escHtml(q.en)} — ${escHtml(right)}</em>`;
+  $('hillBody').appendChild(box);
+  $('hillBody').querySelectorAll('button').forEach(b => b.disabled = true);
+  setTimeout(next, ok ? 420 : 1400);
+}
+function hillRenderCamp(){
+  const r = hillRun;
+  $('hillBody').innerHTML = hillHead() + `
+    <div class="hill-camp">
+      <div class="hc-em">🏕</div>
+      <div class="hc-title">Лагерь ${r.level - 1} взят</div>
+      <div class="hc-sub">${r.level === 6
+        ? 'Дальше — четыре варианта вместо «верно / неверно».'
+        : 'Слова станут тяжелее.'}</div>
+      <div class="hc-score">${r.score} ${plural(r.score, 'очко', 'очка', 'очков')}</div>
+      <button id="hillGoOn">Дальше, уровень ${r.level} ↑</button>
+    </div>`;
+  $('hillGoOn').addEventListener('click', () => { r.idx = 0; hillNextQuestion(); });
+}
+function hillRenderResult(won, reached, beatLevel, beatScore, finalScore){
+  const key = hillRecordKey(hillPreset, hillCefr);
+  const rec = (DOC.games.hill.records || {})[key] || {};
+  const preset = HILL_PRESETS.find(p => p.id === hillPreset);
+  const name = preset.name + (hillPreset === 'level' ? ' · ' + ['A1','A2','B1','B2','C1','C2'][hillCefr - 1] : '');
+  $('hillBody').innerHTML = `
+    <div class="hill-result ${won ? 'won' : ''}">
+      <div class="hr-em">${won ? '👑' : '🪨'}</div>
+      <div class="hr-title">${won ? 'Царь горы!' : 'Сорвался на ' + reached + '-м уровне'}</div>
+      <div class="hr-sub">${name}</div>
+      <div class="hr-score">${finalScore} ${plural(finalScore, 'очко', 'очка', 'очков')}</div>
+      ${beatLevel || beatScore ? `<div class="hr-new">Новый рекорд${beatLevel && beatScore ? '' : beatLevel ? ' по высоте' : ' по очкам'}!</div>` : ''}
+      <div class="hr-best">Лучший результат: ${rec.level || 0}/10${rec.score ? ' · ' + rec.score : ''}${rec.crown ? ' 👑' : ''}</div>
+      ${won ? '' : '<div class="hr-tip">Иди доучи слова — и обратно в гору.</div>'}
+      <div class="hr-btns">
+        <button id="hillAgain">Ещё раз</button>
+        <button id="hillBack2" class="ghost">К сложностям</button>
+      </div>
+    </div>`;
+  $('hillAgain').addEventListener('click', hillStart);
+  $('hillBack2').addEventListener('click', () => hillRenderSetup());
+}
+
+// ================= НАСТРОЙКИ =================
+function renderSettings(){
+  const step = $('setStep');
+  step.innerHTML = STEP_CHOICES.map(p =>
+    `<button data-step="${p}" class="${stepPct === p ? 'sel' : ''}">+${p}%</button>`).join('');
+  step.querySelectorAll('[data-step]').forEach(b => b.addEventListener('click', () => {
+    stepPct = +b.dataset.step; saveAll(); renderSettings();
+  }));
+  $('setStepBar').style.width = stepPct + '%';
+  const presses = Math.ceil(KNOW_MAX / stepPct);
+  $('setStepTxt').textContent = presses + ' ' + plural(presses, 'нажатие', 'нажатия', 'нажатий') + ' до 100%';
+
+  const t = $('setHillTimer');
+  t.innerHTML = Object.keys(HILL_TIMERS).map(k =>
+    `<button data-t="${k}" class="${hillTimerMode === k ? 'sel' : ''}">${HILL_TIMERS[k].name}</button>`).join('');
+  t.querySelectorAll('[data-t]').forEach(b => b.addEventListener('click', () => {
+    hillTimerMode = b.dataset.t; saveAll(); renderSettings();
+  }));
+
+  $('setAutoSpeak').checked = autoSpeak;
+  $('setHintOpen').checked = hintOpen;
+  $('setWide').checked = wideLayout;
+}
+
 // ================= СОБЫТИЯ =================
 scene.addEventListener('click', flip);
 $('spkFront').addEventListener('click', e => { e.stopPropagation(); speakCurrent(); });
@@ -2684,10 +3349,11 @@ $('langSwitch').addEventListener('click', ()=>setMode(mode === 'ER' ? 'RE' : 'ER
 $('langSwitch').addEventListener('keydown', e => {
   if(e.code === 'Space' || e.code === 'Enter'){ e.preventDefault(); setMode(mode === 'ER' ? 'RE' : 'ER'); }
 });
-for(const b of document.querySelectorAll('#langs button'))
+for(const b of document.querySelectorAll('#langs button[data-lang]'))
   b.addEventListener('click', ()=>setLang(b.dataset.lang));
 for(const b of document.querySelectorAll('#levels button'))
-  b.addEventListener('click', ()=> b.dataset.lvl === 'star' ? showFavoritesLevel() : setLevel(+b.dataset.lvl));
+  b.addEventListener('click', ()=>setLevel(+b.dataset.lvl));
+$('btnLvlStar').addEventListener('click', showFavoritesLevel);
 $('btnEdit').addEventListener('click', ()=>showView('edit'));
 $('btnQuotesEdit').addEventListener('click', ()=>showView('qedit'));
 $('btnWriteOpen').addEventListener('click', openWrite);
@@ -2718,7 +3384,14 @@ $('btnBackup').addEventListener('click', ()=>{
   $('backupRestoreMsg').textContent = '';
   $('backupRestoreMsg').classList.remove('error');
 });
-$('btnBackupBack').addEventListener('click', ()=>showView('menu'));
+$('btnBackupBack').addEventListener('click', ()=>showView('settings'));
+$('btnHill').addEventListener('click', hillOpen);
+$('btnSettings').addEventListener('click', ()=>showView('settings'));
+$('btnSetBack').addEventListener('click', ()=>showView('menu'));
+$('setAutoSpeak').addEventListener('change', e => { autoSpeak = e.target.checked; saveAll(); });
+$('setHintOpen').addEventListener('change', e => { hintOpen = e.target.checked; saveAll(); if(deck.length) render(); });
+$('setWide').addEventListener('change', e => { wideLayout = e.target.checked; applyWide(); saveAll(); });
+$('btnHillBack').addEventListener('click', ()=>showView('menu'));
 $('btnExportFile').addEventListener('click', ()=>{
   try{
     const blob = new Blob([exportProgressJson()], {type:'application/json'});
@@ -2762,7 +3435,7 @@ function onRemoteChange(){
     fillCatSelects();
     $('langSwitch').classList.toggle('re', mode === 'RE');
     for(const b of document.querySelectorAll('#langs button')) b.classList.toggle('active', b.dataset.lang === targetLang);
-    for(const b of document.querySelectorAll('#levels button')) b.classList.toggle('active', b.dataset.lvl === String(level));
+    paintLevelButtons();
     if($('viewMenu').classList.contains('active')) renderMenu();
     if($('viewEdit').classList.contains('active')) renderList();
     if($('viewQEdit').classList.contains('active')) renderQuoteList();
@@ -2894,8 +3567,8 @@ document.addEventListener('keydown', e => {
   for(const b of document.querySelectorAll('#langs button'))
     b.classList.toggle('active', b.dataset.lang === targetLang);
   $('quotesLink').classList.toggle('hidden', !LANG_QUOTES[targetLang] || LANG_QUOTES[targetLang].length === 0);
-  for(const b of document.querySelectorAll('#levels button'))
-    b.classList.toggle('active', b.dataset.lvl === String(level));
+  $('hillLink').classList.toggle('hidden', targetLang !== 'ru');   // «Царь горы» пока только для английского
+  paintLevelButtons();
   $('appVerLabel').textContent = APP_VERSION;
   try{
     if('serviceWorker' in navigator && location.protocol.indexOf('http') === 0){
