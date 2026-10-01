@@ -825,13 +825,14 @@
   .p-st b{display:block;font-size:24px;color:var(--know-lite);font-variant-numeric:tabular-nums}
   .p-st b.y{color:#F5C451}
   .p-st span{font-size:10.5px;color:var(--chalk-dim)}
-  #viewSettings .heat{display:flex;gap:4px;justify-content:space-between}
-  #viewSettings .heat .hc{display:flex;flex-direction:column;gap:4px;flex:1}
-  #viewSettings .heat i{display:block;aspect-ratio:1;border-radius:3px;background:rgba(0,0,0,.3)}
-  #viewSettings .heat i.a{background:rgba(62,150,104,.45)}
-  #viewSettings .heat i.b{background:rgba(62,150,104,.8)}
-  #viewSettings .heat i.c{background:var(--know-lite)}
-  #viewSettings .heat i.fu{background:transparent}
+  .heat{display:grid;grid-template-columns:repeat(13,minmax(0,22px));gap:4px;justify-content:space-between}
+  .heat .hc{display:flex;flex-direction:column;gap:4px}
+  .heat i{display:block;aspect-ratio:1;border-radius:3px;background:rgba(0,0,0,.3)}
+  .heat i.a{background:rgba(62,150,104,.45)}
+  .heat i.b{background:rgba(62,150,104,.8)}
+  .heat i.c{background:var(--know-lite)}
+  .heat i.fu{background:transparent}
+  .t-sec{font-size:13px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--chalk-dim);margin:10px 2px -2px}
 
   /* ================= БУМАГА КАРТОЧЕК ================= */
   /* Одна бумага для всех карточек: сессия, упражнения, «Царь горы», листание, диалоги.
@@ -1217,8 +1218,7 @@
   <!-- ================= НАСТРОЙКИ ================= -->
   <div class="view" id="viewSettings">
     <div class="home-body t-body" style="margin-bottom:12px">
-      <div class="t-h1">Профиль</div>
-      <div id="profHead" class="home-body"></div>
+      <div class="t-h1">Настройки</div>
     </div>
 
     <div class="panel">
@@ -1267,7 +1267,6 @@
 
     <div class="panel version-panel">
       <div class="ver-row"><span>Версия приложения</span><b id="appVerLabel">—</b></div>
-      <div class="ver-row"><span>Формат данных</span><b id="appSchemaLabel">—</b></div>
     </div>
 
     <div class="panel">
@@ -1330,7 +1329,7 @@
     <button data-tab="home"><i>☀️</i>Сегодня</button>
     <button data-tab="words"><i>📚</i>Слова</button>
     <button data-tab="acts"><i>🎯</i>Практика</button>
-    <button data-tab="profile"><i>👤</i>Профиль</button>
+    <button data-tab="profile"><i>⚙️</i>Настройки</button>
   </nav>
 
   <!-- ================= МОДАЛЬНОЕ ОКНО ПОДТВЕРЖДЕНИЯ ================= -->
@@ -1558,7 +1557,7 @@ if('speechSynthesis' in window){
 // Контент (WORDS_*/QUOTES_*/EXAMPLES_*) — это код приложения, его можно менять когда угодно.
 // Прогресс — данные пользователя: он живёт отдельно, привязан к стабильным ID карточек
 // и НИКОГДА не перезаписывается при обновлении приложения.
-const APP_VERSION    = '3.1.2';
+const APP_VERSION    = '3.2.0';
 const SCHEMA_VERSION = 7;
 const OLD_TS = 1;   // «неизвестная древность»: метка для данных, перенесённых со старого формата
 
@@ -3854,7 +3853,6 @@ function renderSettings(){
 
   renderProfileHead();
   $('appVerLabel').textContent = APP_VERSION;
-  $('appSchemaLabel').textContent = SCHEMA_VERSION;
   $('setMyWordsN').textContent = customs.length;
   $('setQuoteEdN').textContent = activeQuoteIds().length;
   $('setAutoSpeak').checked = autoSpeak;
@@ -4312,7 +4310,8 @@ function renderHome(){
       <div class="t-h4">Дальше по плану</div>
       <div class="fc">${fcHtml}</div>
     </div>
-    ${leech ? `<button class="t-card t-row" id="todayLeech"><span>🩹 Трудные слова · <b>${leech}</b></span><span class="ar">Разобрать ›</span></button>` : ''}`;
+    ${leech ? `<button class="t-card t-row" id="todayLeech"><span>🩹 Трудные слова · <b>${leech}</b></span><span class="ar">Разобрать ›</span></button>` : ''}
+    ${progressHtml()}`;
 
   wireCourseChips($('homeBody'));
   const go = $('todayGo'); if(go) go.addEventListener('click', () => startSession('today'));
@@ -4763,7 +4762,7 @@ function bestStreak(){
   for(const x of idx){ cur = (prev !== null && x === prev + 1) ? cur + 1 : 1; best = Math.max(best, cur); prev = x; }
   return best;
 }
-function renderProfileHead(){
+function progressHtml(){
   const { list } = achievementState();
   let known = 0;
   for(const L of LANGUAGES) for(const i of srsAllIds(L.code)) if(srsState(L.code, i) === 'known') known++;
@@ -4780,7 +4779,8 @@ function renderProfileHead(){
     heat += `<div class="hc">${col}</div>`;
   }
   const got = list.filter(a => a.got).length;
-  $('profHead').innerHTML = `
+  return `
+    <div class="t-sec">Мой прогресс</div>
     <div class="p-stats">
       <div class="p-st"><b>${known}</b><span>${plural(known,'слово знаю','слова знаю','слов знаю')}</span></div>
       <div class="p-st"><b class="y">${streakDays()}</b><span>дней подряд</span></div>
@@ -4790,6 +4790,8 @@ function renderProfileHead(){
     <div class="t-card"><div class="t-h4">Достижения <span class="h-cnt">${got} из ${list.length}</span></div>
       <div class="ach-grid">${list.map(a => `<div class="ach${a.got ? ' got' : ''}" title="${escAttr(a.name)} — ${escAttr(a.hint)}">
         <span class="ach-em">${a.em}</span><span class="ach-nm">${escHtml(a.name)}</span></div>`).join('')}</div></div>`;
+}
+function renderProfileHead(){
   $('setNew').innerHTML = NEW_CHOICES.map(n => `<button data-n="${n}" class="${newPerDay === n ? 'sel' : ''}">${n}</button>`).join('');
   $('setNew').querySelectorAll('[data-n]').forEach(b => b.addEventListener('click', () => {
     newPerDay = +b.dataset.n; saveAll(); renderSettings();
@@ -4917,7 +4919,7 @@ function updateStorageInfo(){
     return code && !id.includes(':#') && !IDX_BY_WORD_ID[code].has(resolveAlias(id));
   }).length;
   el.innerHTML =
-    `Версия приложения: <b>${APP_VERSION}</b>, формат данных: <b>${SCHEMA_VERSION}</b><br>` +
+    `Версия приложения: <b>${APP_VERSION}</b><br>` +
     `Синхронизация: <b>${cloud.kind}</b>${lsGet(LS_DIRTY) === '1' ? ' · есть неотправленные изменения' : ' · всё отправлено'}<br>` +
     `Локально: ${lsFull ? '<b>localStorage переполнен</b>' : 'localStorage'}${idb.ok ? ' + IndexedDB' : ' (IndexedDB недоступен)'}<br>` +
     `Карточек с прогрессом: <b>${cards}</b>${orphans ? `, из них отложено до возврата слова: <b>${orphans}</b>` : ''}<br>` +
