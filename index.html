@@ -12,14 +12,26 @@
 <meta name="apple-mobile-web-app-title" content="Карточки">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#241A44">
+<script id="look">try{var l=JSON.parse(localStorage.getItem('fc:look')||'null');if(l&&l.v){var s=document.documentElement.style;for(var k in l.v)s.setProperty(k,l.v[k]);var m=document.querySelector('meta[name="theme-color"]');if(m&&l.meta)m.setAttribute('content',l.meta);}}catch(e){}</script>
 <meta name="description" content="Карточки для изучения английского, немецкого и французского.">
 <style>
   :root{
     /* Фон фиолетовый, а всё, что про прогресс, остаётся зелёным —
        так зелёный перестал сливаться с фоном и снова что-то значит. */
-    --board:#2A1E4A;
+    --board:#171130;
     --board-top:#352761;
     --board-bot:#171130;
+    --glow:rgba(167,139,250,.22);   /* свечение сверху */
+    --bar:rgba(20,14,42,.88);       /* нижняя панель */
+    --pop:#2A1F4D;                  /* всплывающие меню и листы */
+    /* бумага карточек (по умолчанию — сепия) */
+    --card-bg:#F4ECD8;
+    --card-ink:#5B4636;
+    --card-soft:#9A8468;
+    --card-line:rgba(91,70,54,.22);
+    --card-chip:rgba(91,70,54,.09);
+    --card-border:transparent;
+    --card-blur:none;
     --chalk:#EDEAF6;
     --chalk-dim:rgba(237,234,246,.62);
     --paper:#FDFBF2;
@@ -55,7 +67,7 @@
   body::before{
     content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
     background:
-      radial-gradient(120% 70% at 50% -8%, rgba(167,139,250,.22), transparent 62%),
+      radial-gradient(120% 70% at 50% -8%, var(--glow), transparent 62%),
       radial-gradient(130% 80% at 50% 112%, rgba(0,0,0,.35), transparent 58%),
       linear-gradient(180deg, var(--board-top), var(--board-bot));
   }
@@ -161,9 +173,9 @@
 
   #writeScene{cursor:default}
   .write-input{width:100%;max-width:280px;margin-top:16px;text-align:center;
-    appearance:none;border:1.5px solid rgba(34,41,59,.25);background:rgba(0,0,0,.04);color:var(--ink);
+    appearance:none;border:1.5px solid var(--card-line);background:rgba(0,0,0,.04);color:var(--ink);
     border-radius:12px;padding:12px 14px;font:600 20px/1.2 inherit;outline:none}
-  .write-input:focus{border-color:rgba(34,41,59,.5)}
+  .write-input:focus{border-color:var(--card-line)}
   .write-input:disabled{opacity:.75}
   .write-feedback{margin-top:12px;font-size:16px;font-weight:600;min-height:22px}
   .write-feedback.ok{color:var(--know)}
@@ -204,18 +216,18 @@
   .hint{position:absolute;bottom:12px;font-size:12px;color:var(--ink-soft);opacity:.8}
 
   .word-row{display:flex;align-items:center;gap:10px;max-width:100%}
-  .speak{appearance:none;border:0;background:rgba(34,41,59,.08);color:var(--ink);
+  .speak{appearance:none;border:0;background:var(--card-chip);color:var(--ink);
     width:38px;height:38px;min-width:38px;border-radius:99px;font-size:17px;cursor:pointer;
     display:flex;align-items:center;justify-content:center}
 
   /* кнопка «картинки» — это ссылка, чтобы новая вкладка надёжно открывалась на телефоне */
   a.speak{text-decoration:none}
-  .speak.img{background:rgba(34,41,59,.05)}
+  .speak.img{background:var(--card-chip)}
 
   .example{margin-top:12px;font-size:14px;color:var(--ink-soft);font-style:italic;text-align:center;
     line-height:1.4;display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:8px;max-width:100%}
   .example .speak{width:28px;height:28px;min-width:28px;font-size:13px}
-  .quote-word{color:#000;font-weight:700;font-style:normal}
+  .quote-word{color:var(--ink);font-weight:700;font-style:normal}
   .quote-hint-attr{flex-basis:100%;margin-top:2px;font-size:11.5px;color:var(--ink-soft);font-style:normal}
   .quote-hint-attr i{font-style:italic;color:var(--ink)}
   .star-btn{position:absolute;top:10px;right:10px;z-index:20;appearance:none;border:0;cursor:pointer;
@@ -355,15 +367,15 @@
     font:600 14px/1 inherit;cursor:pointer}
   #confirmYes{background:var(--accent);color:#fff}
   #confirmYes:hover{background:#E86E61}
-  #confirmNo{background:rgba(34,41,59,.08);color:var(--ink)}
-  #confirmNo:hover{background:rgba(34,41,59,.15)}
+  #confirmNo{background:var(--card-chip);color:var(--ink)}
+  #confirmNo:hover{background:var(--card-line)}
 
   /* ================= ВКЛАДКИ ================= */
   /* Панель повторяет ширину колонки с содержимым и стоит по центру —
      на широком экране она не растягивается на всё окно. */
   .tabbar{position:fixed;left:50%;transform:translateX(-50%);bottom:0;z-index:50;display:flex;
     width:100%;max-width:640px;
-    background:rgba(20,14,42,.88);backdrop-filter:blur(14px);
+    background:var(--bar);backdrop-filter:blur(14px);
     border:1px solid rgba(237,234,246,.12);border-bottom:0;
     border-radius:20px 20px 0 0;
     box-shadow:0 -8px 28px rgba(0,0,0,.3);
@@ -526,9 +538,9 @@
   .hill-yn .no{background:var(--accent)} .hill-yn .no:hover{background:#E86E61}
   .hill-opts{display:flex;flex-direction:column;gap:8px;margin-top:6px}
   .hill-opts button{appearance:none;cursor:pointer;font:600 16px/1.3 inherit;text-align:left;
-    padding:14px 16px;border-radius:12px;border:1.5px solid rgba(34,41,59,.18);
-    background:rgba(34,41,59,.04);color:var(--ink);transition:.12s}
-  .hill-opts button:hover{background:rgba(34,41,59,.1);border-color:rgba(34,41,59,.35)}
+    padding:14px 16px;border-radius:12px;border:1.5px solid var(--card-line);
+    background:var(--card-chip);color:var(--ink);transition:.12s}
+  .hill-opts button:hover{background:var(--card-line);border-color:var(--card-line)}
   .hill-left{text-align:center;font-size:12.5px;color:var(--chalk-dim)}
   .hill-flash{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
     gap:14px;z-index:200;pointer-events:none;font-size:80px;animation:hillPop .2s ease-out}
@@ -631,7 +643,7 @@
   .u-btn2:hover{background:rgba(237,234,246,.1)}
 
   /* выбор курса */
-  .course-menu{position:absolute;z-index:120;min-width:220px;background:#2A1F4D;border:1px solid rgba(237,234,246,.16);
+  .course-menu{position:absolute;z-index:120;min-width:220px;background:var(--pop);border:1px solid rgba(237,234,246,.16);
     border-radius:16px;padding:6px;box-shadow:0 18px 40px rgba(0,0,0,.45)}
   .course-menu button{appearance:none;border:0;background:transparent;width:100%;display:flex;align-items:center;gap:10px;
     color:var(--chalk);font:600 14.5px/1 inherit;padding:11px 10px;border-radius:11px;cursor:pointer;text-align:left}
@@ -680,20 +692,20 @@
   .s-ask{font-size:13px;color:var(--ink-soft)}
   .s-q{font-family:Georgia,serif;font-size:clamp(30px,8vw,42px);line-height:1.15;display:flex;align-items:center;
     gap:12px;justify-content:center;flex-wrap:wrap;word-break:break-word}
-  .s-spk{appearance:none;border:0;cursor:pointer;width:40px;height:40px;border-radius:50%;background:rgba(34,41,59,.08);
+  .s-spk{appearance:none;border:0;cursor:pointer;width:40px;height:40px;border-radius:50%;background:var(--card-chip);
     font-size:17px;flex:none;display:inline-flex;align-items:center;justify-content:center}
   .s-hint{appearance:none;cursor:pointer;border:1px dashed var(--ink-soft);background:transparent;color:var(--ink-soft);
     border-radius:99px;padding:7px 14px;font:500 12.5px/1 inherit}
-  .s-hintbox{font-size:15px;color:#3a4256;line-height:1.45;max-width:320px;font-style:italic;letter-spacing:.04em}
+  .s-hintbox{font-size:15px;color:var(--ink);line-height:1.45;max-width:320px;font-style:italic;letter-spacing:.04em}
   .s-ans{width:100%;display:flex;flex-direction:column;align-items:center;gap:10px}
-  .s-ans hr{width:60%;border:0;border-top:1.5px dashed rgba(34,41,59,.2);margin:4px 0}
+  .s-ans hr{width:60%;border:0;border-top:1.5px dashed var(--card-line);margin:4px 0}
   .s-a{font-size:clamp(22px,6vw,28px);font-weight:700;display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center}
-  .s-ex{font-size:15px;line-height:1.45;color:#3a4256;max-width:330px}
+  .s-ex{font-size:15px;line-height:1.45;color:var(--ink);max-width:330px}
   .s-ex .quote-word{background:rgba(127,199,155,.38);padding:0 3px;border-radius:4px;color:inherit}
-  .s-exru{font-size:13px;color:#7a8296;font-style:italic;max-width:330px}
-  .s-tap{font-size:12px;color:#9aa1b0;margin-top:6px}
-  .s-attr{font-size:11.5px;color:#9aa1b0;margin-top:5px;font-style:italic}
-  .pl-src{font-size:11.5px;color:#9aa1b0}
+  .s-exru{font-size:13px;color:var(--ink-soft);font-style:italic;max-width:330px}
+  .s-tap{font-size:12px;color:var(--ink-soft);margin-top:6px}
+  .s-attr{font-size:11.5px;color:var(--ink-soft);margin-top:5px;font-style:italic}
+  .pl-src{font-size:11.5px;color:var(--ink-soft)}
   .s-show{appearance:none;border:0;cursor:pointer;width:100%;background:rgba(237,234,246,.14);color:var(--chalk);
     border-radius:15px;padding:18px;font:700 16px/1 inherit;transition:.15s}
   .s-show:hover{background:rgba(237,234,246,.22)}
@@ -753,7 +765,7 @@
   .w-pill.hard{background:rgba(228,106,94,.15);color:#F2A39B}
 
   .sheet-ov{position:fixed;inset:0;z-index:150;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:center}
-  .sheet{width:100%;max-width:640px;background:#241A44;border-radius:22px 22px 0 0;padding:16px 16px calc(18px + env(safe-area-inset-bottom));
+  .sheet{width:100%;max-width:640px;background:var(--pop);border-radius:22px 22px 0 0;padding:16px 16px calc(18px + env(safe-area-inset-bottom));
     display:flex;flex-direction:column;gap:9px;animation:sheetUp .2s ease-out}
   @keyframes sheetUp{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
   .sheet-t{font-weight:800;font-size:17px;text-align:center;margin:4px 0 8px}
@@ -787,11 +799,11 @@
     padding:0 4px;font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
   .pl-sent .blank.ok{color:var(--know);border-color:var(--know);background:rgba(127,199,155,.22);border-radius:6px 6px 0 0}
   .pl-sent .blank.bad{color:#C2453A;border-color:#C2453A;background:rgba(228,106,94,.16);border-radius:6px 6px 0 0}
-  .pl-ru{font-size:13.5px;color:#7a8296;font-style:italic}
+  .pl-ru{font-size:13.5px;color:var(--ink-soft);font-style:italic}
   .pl-spk{appearance:none;border:0;cursor:pointer;width:96px;height:96px;border-radius:50%;background:#7C6BC4;color:#fff;
     font-size:40px;box-shadow:0 10px 26px rgba(124,107,196,.45)}
   .pl-spk:active{transform:scale(.96)}
-  .pl-slow{appearance:none;border:0;cursor:pointer;background:transparent;color:#6B7385;font:600 13px/1 inherit}
+  .pl-slow{appearance:none;border:0;cursor:pointer;background:transparent;color:var(--ink-soft);font:600 13px/1 inherit}
   .pl-reveal{font-size:21px;font-weight:700}
   .pl-reveal[hidden]{display:none}
   .pl-opts{display:grid;grid-template-columns:1fr 1fr;gap:9px}
@@ -804,7 +816,7 @@
   #plNext[hidden]{display:none}
   .pl-end{display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;padding-top:20px}
   .toast{position:fixed;left:50%;bottom:110px;transform:translateX(-50%);z-index:200;max-width:340px;width:calc(100% - 40px);
-    background:#2A1F4D;border:1px solid rgba(237,234,246,.18);color:var(--chalk);border-radius:14px;padding:13px 16px;
+    background:var(--pop);border:1px solid rgba(237,234,246,.18);color:var(--chalk);border-radius:14px;padding:13px 16px;
     font-size:14px;line-height:1.4;text-align:center;box-shadow:0 12px 30px rgba(0,0,0,.4)}
 
   /* ================= ПРОФИЛЬ ================= */
@@ -820,6 +832,45 @@
   #viewSettings .heat i.b{background:rgba(62,150,104,.8)}
   #viewSettings .heat i.c{background:var(--know-lite)}
   #viewSettings .heat i.fu{background:transparent}
+
+  /* ================= БУМАГА КАРТОЧЕК ================= */
+  /* Одна бумага для всех карточек: сессия, упражнения, «Царь горы», листание, диалоги.
+     Внутри карточки тёмный «чернильный» цвет подменяется цветом выбранной бумаги,
+     поэтому на тёмном стекле текст сам становится светлым. */
+  .s-paper,.pl-card,.hill-q,.face,.confirm-box{
+    background:var(--card-bg)!important;color:var(--card-ink);
+    --ink:var(--card-ink);--ink-soft:var(--card-soft);
+    border:1px solid var(--card-border);backdrop-filter:var(--card-blur);-webkit-backdrop-filter:var(--card-blur)}
+  .face::before{display:none}   /* поля тетради теперь рисует сама бумага */
+  .s-ans hr{border-top-color:var(--card-line)}
+  .s-ex .quote-word{color:inherit}
+
+  /* Переключатель направления: слева язык курса, справа русский.
+     Кружок стоит со стороны того языка, который показывается на карточке. */
+  .dir-sw{appearance:none;cursor:pointer;display:flex;align-items:center;gap:9px;padding:6px 12px;border-radius:999px;
+    background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:var(--chalk);font:700 14px/1 inherit;
+    -webkit-tap-highlight-color:transparent}
+  .dir-sw .dl,.dir-sw .dr{transition:opacity .2s,color .2s;min-width:20px;text-align:center}
+  .dir-sw .dr,.dir-sw.re .dl{opacity:.45}
+  .dir-sw.re .dr{opacity:1}
+  .dir-sw .dt{position:relative;width:46px;height:28px;border-radius:999px;background:var(--know);
+    box-shadow:inset 0 0 0 1px rgba(0,0,0,.15);transition:background .2s}
+  .dir-sw .dt i{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;
+    box-shadow:0 2px 5px rgba(0,0,0,.3);transition:transform .22s cubic-bezier(.3,.7,.4,1.2)}
+  .dir-sw.re .dt i{transform:translateX(18px)}
+  .dir-sw.re .dt{background:#3B82F6}   /* с русского — синий, чтобы направление было видно сразу */
+
+  /* ================= ОФОРМЛЕНИЕ В ПРОФИЛЕ ================= */
+  .look-l{font-size:12px;color:var(--chalk-dim);font-weight:700;letter-spacing:.05em;text-transform:uppercase;margin:14px 0 9px}
+  .look-l:first-of-type{margin-top:4px}
+  .look-row{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+  .look-row button{appearance:none;cursor:pointer;background:rgba(0,0,0,.18);border:2px solid transparent;border-radius:14px;
+    padding:10px 6px 9px;color:var(--chalk);font:600 12.5px/1.1 inherit;display:flex;flex-direction:column;align-items:center;gap:8px;transition:.15s}
+  .look-row button:hover{background:rgba(0,0,0,.28)}
+  .look-row button.sel{border-color:var(--know-lite);background:rgba(127,199,155,.1)}
+  .look-sw{width:46px;height:46px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(255,255,255,.15)}
+  .look-pp{width:64px;height:44px;border-radius:9px;display:flex;align-items:center;justify-content:center;
+    font:700 17px/1 Georgia,serif;box-shadow:0 3px 8px rgba(0,0,0,.3)}
 </style>
 </head>
 <body>
@@ -1180,6 +1231,14 @@
     </div>
 
     <div class="panel">
+      <h3>Оформление</h3>
+      <div class="look-l">Тема</div>
+      <div class="look-row" id="setTheme"></div>
+      <div class="look-l">Бумага карточек</div>
+      <div class="look-row" id="setPaper"></div>
+    </div>
+
+    <div class="panel">
       <h3>Шаг в режиме листания</h3>
       <p class="backup-hint">На сколько процентов заполняется полоска за одно «Верно», когда просто листаешь карточки темы.
         В ежедневных повторениях полоска показывает, насколько крепко ты помнишь слово.</p>
@@ -1499,7 +1558,7 @@ if('speechSynthesis' in window){
 // Контент (WORDS_*/QUOTES_*/EXAMPLES_*) — это код приложения, его можно менять когда угодно.
 // Прогресс — данные пользователя: он живёт отдельно, привязан к стабильным ID карточек
 // и НИКОГДА не перезаписывается при обновлении приложения.
-const APP_VERSION    = '3.0.0';
+const APP_VERSION    = '3.1.2';
 const SCHEMA_VERSION = 7;
 const OLD_TS = 1;   // «неизвестная древность»: метка для данных, перенесённых со старого формата
 
@@ -2043,7 +2102,9 @@ function applyDoc(doc){
   if(S['srs:new'] && NEW_CHOICES.indexOf(S['srs:new'].v) >= 0) newPerDay = S['srs:new'].v;
   if(S['srs:both']) bothWays = !!S['srs:both'].v;
   for(const L of LANGUAGES){ const r = S['srs:prio:' + L.code]; srsPrio[L.code] = r ? r.v : -1; }
-  applyWide();
+  if(S['ui:theme'] && THEMES.some(t => t.id === S['ui:theme'].v)) uiTheme = S['ui:theme'].v;
+  if(S['ui:paper'] && PAPERS.some(p => p.id === S['ui:paper'].v)) uiPaper = S['ui:paper'].v;
+  applyWide(); applyLook();
   todayCount = ((doc.stats && doc.stats.days && doc.stats.days[todayKey()]) || {}).n || 0;
   repoint();
 }
@@ -2129,7 +2190,8 @@ function buildDoc(){
   // и затёрло то, что человек когда-то выставил.
   const DEFAULTS = { mode:'ER', lang:'ru', 'hill:preset':'climb', 'hill:cefr':1, 'hill:timer':'soft',
                      stepPct:20, autoSpeak:0, hintOpen:0, wide:0, 'srs:new':10, 'srs:both':1,
-                     'srs:prio:ru':-1, 'srs:prio:de':-1, 'srs:prio:fr':-1 };
+                     'srs:prio:ru':-1, 'srs:prio:de':-1, 'srs:prio:fr':-1,
+                     'ui:theme':'violet', 'ui:paper':'sepia' };
   for(const L of LANGUAGES) DEFAULTS['level:' + L.code] = 1;
   const setS = (k, v) => {
     const r = doc.settings[k];
@@ -2141,6 +2203,7 @@ function buildDoc(){
   setS('hill:preset', hillPreset); setS('hill:cefr', hillCefr); setS('hill:timer', hillTimerMode);
   setS('stepPct', stepPct); setS('autoSpeak', autoSpeak ? 1 : 0);
   setS('srs:new', newPerDay); setS('srs:both', bothWays ? 1 : 0);
+  setS('ui:theme', uiTheme); setS('ui:paper', uiPaper);
   for(const L of LANGUAGES) setS('srs:prio:' + L.code, (srsPrio[L.code] === undefined || srsPrio[L.code] === null) ? -1 : srsPrio[L.code]);
   setS('hintOpen', hintOpen ? 1 : 0); setS('wide', wideLayout ? 1 : 0);
   for(const L of LANGUAGES) setS('level:' + L.code, levelByLang[L.code]);
@@ -3887,6 +3950,64 @@ function hillRecordTitle(key){
 const SRS_KNOWN = 21;           // с этого интервала слово считается выученным
 const SRS_EASE0 = 250;
 const SRS_LEECH = 3;            // столько раз забыл — слово «трудное»
+
+// ================= ОФОРМЛЕНИЕ =================
+// Тема — цвет всего приложения, бумага — цвет карточек. Это просто наборы
+// CSS-переменных; выбор хранится в настройках (ui:theme, ui:paper) и
+// синхронизируется вместе с ними. Копия в localStorage ('fc:look') нужна,
+// чтобы при запуске не мелькала тема по умолчанию.
+const THEMES = [
+  {id:'violet',  name:'Фиалка',  top:'#352761',bot:'#171130',glow:'rgba(167,139,250,.22)',bar:'rgba(20,14,42,.88)',pop:'#2A1F4D',meta:'#241A44'},
+  {id:'ocean',   name:'Океан',   top:'#1E3A5F',bot:'#0A1526',glow:'rgba(96,165,250,.2)', bar:'rgba(9,19,35,.9)',  pop:'#1A2E4A',meta:'#13243B'},
+  {id:'graphite',name:'Графит',  top:'#30333A',bot:'#111216',glow:'rgba(210,215,225,.09)',bar:'rgba(16,17,21,.92)',pop:'#2A2D33',meta:'#1F2126'},
+  {id:'cherry',  name:'Вишня',   top:'#4A1D35',bot:'#1A0912',glow:'rgba(244,114,182,.18)',bar:'rgba(28,10,20,.9)', pop:'#3A1A2C',meta:'#2E1220'},
+  {id:'coffee',  name:'Кофе',    top:'#40302A',bot:'#16100D',glow:'rgba(251,191,140,.13)',bar:'rgba(23,16,12,.92)',pop:'#352821',meta:'#2A1E18'},
+  {id:'midnight',name:'Полночь', top:'#16141F',bot:'#000000',glow:'rgba(167,139,250,.09)',bar:'rgba(0,0,0,.92)',  pop:'#1C1A26',meta:'#0A090F'}
+];
+const P_DARK = { ink:'#2B3346', soft:'#6B7385', line:'rgba(43,51,70,.2)', chip:'rgba(43,51,70,.08)', border:'transparent', blur:'none' };
+const PAPERS = [
+  Object.assign({}, P_DARK, {id:'grid', name:'Клетка',
+    bg:'linear-gradient(90deg,transparent 30px,rgba(220,90,80,.45) 30px,rgba(220,90,80,.45) 32px,transparent 32px), linear-gradient(rgba(96,140,200,.11) 1px,transparent 1px) 0 0/22px 22px, linear-gradient(90deg,rgba(96,140,200,.11) 1px,transparent 1px) 0 0/22px 22px, #F7F2E2'}),
+  Object.assign({}, P_DARK, {id:'lines', name:'Линейка',
+    bg:'linear-gradient(90deg,transparent 30px,rgba(220,90,80,.45) 30px,rgba(220,90,80,.45) 32px,transparent 32px), repeating-linear-gradient(180deg,transparent 0 29px,rgba(96,140,200,.24) 29px 30px), #F8F3E3'}),
+  {id:'oldpaper', name:'Старая', bg:'radial-gradient(120% 90% at 50% 40%,transparent 55%,rgba(120,80,30,.16)), linear-gradient(160deg,#F1E4C6,#E7D5AE)',
+    ink:'#4A3622', soft:'#8A6E4B', line:'rgba(74,54,34,.25)', chip:'rgba(74,54,34,.09)', border:'transparent', blur:'none'},
+  {id:'sepia', name:'Сепия', bg:'#F4ECD8',
+    ink:'#5B4636', soft:'#9A8468', line:'rgba(91,70,54,.22)', chip:'rgba(91,70,54,.09)', border:'transparent', blur:'none'},
+  {id:'lilac', name:'Сирень', bg:'linear-gradient(170deg,#EFE9FA,#E4DBF6)',
+    ink:'#2E2650', soft:'#7D72A3', line:'rgba(46,38,80,.2)', chip:'rgba(46,38,80,.08)', border:'transparent', blur:'none'},
+  {id:'glass', name:'Стекло', bg:'linear-gradient(165deg,rgba(255,255,255,.11),rgba(255,255,255,.05))',
+    ink:'#EDEAF6', soft:'rgba(237,234,246,.58)', line:'rgba(237,234,246,.2)', chip:'rgba(237,234,246,.12)',
+    border:'rgba(237,234,246,.18)', blur:'blur(10px)'}
+];
+let uiTheme = 'violet', uiPaper = 'sepia';
+
+function lookVars(){
+  const t = THEMES.find(x => x.id === uiTheme) || THEMES[0];
+  const p = PAPERS.find(x => x.id === uiPaper) || PAPERS[3];
+  return { meta: t.meta, v: {
+    '--board': t.bot, '--board-top': t.top, '--board-bot': t.bot, '--glow': t.glow, '--bar': t.bar, '--pop': t.pop,
+    '--card-bg': p.bg, '--card-ink': p.ink, '--card-soft': p.soft, '--card-line': p.line,
+    '--card-chip': p.chip, '--card-border': p.border, '--card-blur': p.blur } };
+}
+function applyLook(){
+  const l = lookVars(), st = document.documentElement.style;
+  for(const k in l.v) st.setProperty(k, l.v[k]);
+  const m = document.querySelector('meta[name="theme-color"]'); if(m) m.setAttribute('content', l.meta);
+  try{ localStorage.setItem('fc:look', JSON.stringify(l)); }catch(e){}
+}
+function renderLook(){
+  const th = $('setTheme'), pp = $('setPaper'); if(!th || !pp) return;
+  th.innerHTML = THEMES.map(t => `<button data-th="${t.id}" class="${uiTheme === t.id ? 'sel' : ''}">
+    <span class="look-sw" style="background:linear-gradient(160deg,${t.top},${t.bot})"></span>${t.name}</button>`).join('');
+  pp.innerHTML = PAPERS.map(p => `<button data-pp="${p.id}" class="${uiPaper === p.id ? 'sel' : ''}">
+    <span class="look-pp" style="background:${p.bg};color:${p.ink};border:1px solid ${p.border}">Aa</span>${p.name}</button>`).join('');
+  th.querySelectorAll('[data-th]').forEach(b => b.addEventListener('click', () => {
+    uiTheme = b.dataset.th; applyLook(); saveAll(); renderLook(); }));
+  pp.querySelectorAll('[data-pp]').forEach(b => b.addEventListener('click', () => {
+    uiPaper = b.dataset.pp; applyLook(); saveAll(); renderLook(); }));
+}
+
 const NEW_CHOICES = [5, 10, 15, 20, 30];
 let newPerDay = 10;
 let bothWays = true;            // крепкие слова спрашивать в обратную сторону
@@ -4394,7 +4515,8 @@ function renderWords(){
   }
 
   $('wordsBody').innerHTML = `
-    <div class="t-top">${courseChip()}<button class="chip" id="wDir">${modeTxt}</button></div>
+    <div class="t-top">${courseChip()}<button class="dir-sw${mode === 'RE' ? ' re' : ''}" id="wDir" role="switch" aria-checked="${mode === 'RE'}"
+      aria-label="${modeTxt}" title="${modeTxt}"><span class="dl">${LANGUAGES.find(l => l.code === code).label}</span><span class="dt"><i></i></span><span class="dr">RU</span></button></div>
     <div class="t-h1">Слова</div>
     <div class="levels w-levels">${LVL_NAMES.map((n, k) =>
       `<button data-lvl="${k + 1}" class="${lvl === k + 1 ? 'active' : ''}">${n}</button>`).join('')}</div>
@@ -4410,7 +4532,8 @@ function renderWords(){
     <div id="wList">${list}</div>`;
 
   wireCourseChips($('wordsBody'));
-  $('wDir').addEventListener('click', () => { setMode(mode === 'ER' ? 'RE' : 'ER'); renderWords(); });
+  $('wDir').addEventListener('click', e => { const b = e.currentTarget; b.classList.toggle('re');
+    setTimeout(() => { setMode(mode === 'ER' ? 'RE' : 'ER'); renderWords(); }, 200); });
   $('wordsBody').querySelectorAll('.w-levels button').forEach(b => b.addEventListener('click', () => {
     setLevel(+b.dataset.lvl); renderWords();
   }));
@@ -4672,6 +4795,7 @@ function renderProfileHead(){
     newPerDay = +b.dataset.n; saveAll(); renderSettings();
   }));
   $('setBoth').checked = bothWays;
+  renderLook();
 }
 
 // ================= СОБЫТИЯ =================
