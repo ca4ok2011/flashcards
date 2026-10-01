@@ -861,6 +861,17 @@
   .dir-sw.re .dt i{transform:translateX(18px)}
   .dir-sw.re .dt{background:#3B82F6}   /* с русского — синий, чтобы направление было видно сразу */
 
+  /* Выбор категории цитат */
+  .q-pick{display:none;width:100%;max-width:560px;margin:0 auto;padding:0 2px 24px}
+  #viewQuotes.picking .q-pick{display:flex;flex-direction:column;gap:12px;margin-top:16px}
+  .q-pick .t-sec{margin:6px 2px -4px}
+  #viewQuotes.picking main,#viewQuotes.picking .controls,#viewQuotes.picking .toolbar,
+  #viewQuotes.picking footer,#viewQuotes.picking #btnQuotesEdit{display:none}
+  .q-pick .th .n{align-items:baseline}
+  .q-pick .th .sub{font-size:12px;color:var(--chalk-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .q-pick .th .ar{color:var(--chalk-dim);font-size:18px;flex:none}
+  .q-pick .th.all{background:rgba(127,199,155,.07)}
+
   /* ================= ОФОРМЛЕНИЕ В ПРОФИЛЕ ================= */
   .look-l{font-size:12px;color:var(--chalk-dim);font-weight:700;letter-spacing:.05em;text-transform:uppercase;margin:14px 0 9px}
   .look-l:first-of-type{margin-top:4px}
@@ -1091,10 +1102,11 @@
     <div class="study-top">
       <button class="back-btn" id="btnQuotesBack">← Темы</button>
       <div class="study-top-right">
-        <div class="study-theme">🎬 Цитаты<small id="quotesCount">0 цитат</small></div>
+        <div class="study-theme"><span id="quotesTitle">🎬 Цитаты</span><small id="quotesCount">0 цитат</small></div>
         <button id="btnQuotesEdit" title="Редактировать цитаты">✏️</button>
       </div>
     </div>
+    <div class="q-pick t-body" id="qPick"></div>
     <main>
       <div class="scene">
         <button class="star-btn" id="starBtnQuote" title="В избранное">★</button>
@@ -1557,7 +1569,7 @@ if('speechSynthesis' in window){
 // Контент (WORDS_*/QUOTES_*/EXAMPLES_*) — это код приложения, его можно менять когда угодно.
 // Прогресс — данные пользователя: он живёт отдельно, привязан к стабильным ID карточек
 // и НИКОГДА не перезаписывается при обновлении приложения.
-const APP_VERSION    = '3.2.0';
+const APP_VERSION    = '3.3.1';
 const SCHEMA_VERSION = 7;
 const OLD_TS = 1;   // «неизвестная древность»: метка для данных, перенесённых со старого формата
 
@@ -3045,10 +3057,97 @@ function activeQuoteIds(){
   for(const c of customQuotes) ids.push(c.id);
   return ids;
 }
+
+// ================= КАТЕГОРИИ ЦИТАТ (английский) =================
+// Категория определяется по фильму/игре из исходной базы, поэтому правка
+// текста цитаты или её подписи в редакторе категорию не сбивает.
+const QUOTE_CATS = [
+  { id:'hero',    emoji:'🦸', name:'Marvel' },
+  { id:'dc',      emoji:'🦇', name:'DC' },
+  { id:'scifi',   emoji:'🚀', name:'Фантастика и космос' },
+  { id:'fantasy', emoji:'🐉', name:'Фэнтези и приключения' },
+  { id:'cartoon', emoji:'🏰', name:'Мультфильмы' },
+  { id:'toon',    emoji:'📺', name:'Мультсериалы и аниме' },
+  { id:'game',    emoji:'🎮', name:'Видеоигры' },
+  { id:'action',  emoji:'🔫', name:'Боевики и гангстеры' },
+  { id:'horror',  emoji:'👻', name:'Ужасы и триллеры' },
+  { id:'comedy',  emoji:'😂', name:'Комедии' },
+  { id:'sport',   emoji:'🥊', name:'Спорт и мотивация' },
+  { id:'drama',   emoji:'🎭', name:'Драма и классика' },
+  { id:'other',   emoji:'🎞️', name:'Другое' }
+];
+const QUOTE_SRC_CAT = {"300 (2006)":"action","A Bug's Life (1998)":"cartoon","A Few Good Men (1992)":"drama","A League of Their Own (1992)":"sport","Aladdin (1992)":"cartoon","Alice in Wonderland (1951)":"cartoon","Alien (1979)":"scifi","Alien: Resurrection (1997)":"scifi","Aliens (1986)":"scifi","All About Eve (1950)":"drama","An American Tail (1986)":"cartoon","Animal Farm (1954)":"cartoon","Animal House (1978)":"comedy","Ant-Man (2015)":"hero","Ant-Man and the Wasp (2018)":"hero","Apocalypse Now (1979)":"drama","Apollo 13 (1995)":"scifi","Army of Darkness (1992)":"horror","Auntie Mame (1958)":"comedy","Avatar: The Last Airbender (2005)":"toon","Avengers: Age of Ultron (2015)":"hero","Avengers: Endgame (2019)":"hero","Avengers: Infinity War (2018)":"hero","Babe (1995)":"cartoon","Back to the Future (1985)":"scifi","Bad Boys (1995)":"action","Bad Boys II (2003)":"action","Batman (1989)":"dc","Batman (various films)":"dc","Batman Begins (2005)":"dc","Beauty and the Beast (1991)":"cartoon","Beetlejuice (1988)":"horror","Beverly Hills Cop (1984)":"action","BioShock (2007)":"game","Black Panther (2018)":"hero","Blade Runner (1982)":"scifi","Bonnie and Clyde (1967)":"action","Bride of Frankenstein (1935)":"horror","Captain America: Civil War (2016)":"hero","Captain America: The First Avenger (2011)":"hero","Captain America: The Winter Soldier (2014)":"hero","Captain Marvel (2019)":"hero","Carrie (1976)":"horror","Cars (2006)":"cartoon","Casablanca (1942)":"drama","Cast Away (2000)":"drama","Castlevania: Symphony of the Night (1997)":"game","Charlotte's Web (1973)":"cartoon","Cinderella (1950)":"cartoon","Cinderella (2015)":"cartoon","Citizen Kane (1941)":"drama","Commando (1985)":"action","Cool Hand Luke (1967)":"drama","Creed (2015)":"sport","Crocodile Dundee (1986)":"comedy","Danny Phantom (2004)":"toon","Dark Souls (2011)":"game","Dawn of the Dead (1978)":"horror","Dawn of the Planet of the Apes (2014)":"scifi","Dead Poets Society (1989)":"sport","Deadpool (2016)":"hero","Deadpool 2 (2018)":"hero","Deus Ex (2000)":"game","Deus Ex series":"game","Diablo (1996)":"game","Diablo II (2000)":"game","Die Hard (1988)":"action","Die Hard 2 (1990)":"action","Digimon: Digital Monsters (1999)":"toon","Dirty Dancing (1987)":"drama","Doctor Strange (2016)":"hero","Doctor Strange in the Multiverse of Madness (2022)":"hero","Dog Day Afternoon (1975)":"action","Dr. No (1962)":"action","Dr. Strangelove (1964)":"comedy","Dracula (1931)":"horror","Dracula 2000 (2000)":"horror","Drake & Josh (2004)":"toon","E.T. the Extra-Terrestrial (1982)":"scifi","Ella Enchanted (2004)":"cartoon","Evil Dead II (1987)":"horror","Fallout (1997)":"game","Fallout 3 (2008)":"game","Fallout series":"game","Ferris Bueller's Day Off (1986)":"comedy","Field of Dreams (1989)":"sport","Fight Club (1999)":"drama","Final Fantasy IX (2000)":"game","Final Fantasy VII (1997)":"game","Final Fantasy VII Remake (2020)":"game","Finding Nemo (2003)":"cartoon","Forgetting Sarah Marshall (2008)":"comedy","Forrest Gump (1994)":"drama","Frankenstein (1931)":"horror","Frozen (2013)":"cartoon","Frozen II (2019)":"cartoon","Futurama (1999)":"toon","Game of Thrones (2011)":"fantasy","Game of Thrones (TV series)":"fantasy","Get Out (2017)":"horror","Ghostbusters (1984)":"comedy","Goldfinger (1964)":"action","Gone with the Wind (1939)":"drama","Good Will Hunting (1997)":"sport","Goodfellas (1990)":"action","Grand Hotel (1932)":"drama","Guardians of the Galaxy (2014)":"hero","Guardians of the Galaxy Vol. 2 (2017)":"hero","Guardians of the Galaxy Vol. 3 (2023)":"hero","Harry Potter and the Deathly Hallows Part 1 (2010)":"fantasy","Harry Potter and the Deathly Hallows Part 2 (2011)":"fantasy","Harry Potter and the Philosopher's Stone (2001)":"fantasy","Harry Potter and the Prisoner of Azkaban (2004)":"fantasy","Harry Potter and the Sorcerer's Stone (2001)":"fantasy","Hercules (1997)":"cartoon","In Her Shoes (2005)":"comedy","Independence Day (1996)":"scifi","Indiana Jones and the Last Crusade (1989)":"fantasy","Indiana Jones and the Temple of Doom (1984)":"fantasy","Invader Zim (2001)":"toon","Iron Man (2008)":"hero","Iron Man (2008) / Avengers: Endgame (2019)":"hero","Iron Man 2 (2010)":"hero","Iron Man 3 (2013)":"hero","It Came from Outer Space (1953)":"scifi","Jaws (1975)":"horror","Jaws 2 (1978)":"horror","Jerry Maguire (1996)":"sport","Judge Dredd (1995)":"scifi","Jurassic Park (1993)":"scifi","Jurassic Park: The Lost World (1997)":"scifi","Kindergarten Cop (1990)":"action","Kingpin (1996)":"comedy","Lethal Weapon (1987)":"action","Lilo & Stitch (2002)":"cartoon","Live Free or Die Hard (2007)":"action","Loki (2021)":"hero","Marathon Man (1976)":"horror","Mario Party series":"game","Mass Effect (2007)":"game","Mass Effect 2 (2010)":"game","Mass Effect series":"game","Meet the Robinsons (2007)":"cartoon","Metal Gear Solid (1998)":"game","Metal Gear Solid 4 (2008)":"game","Metal Gear Solid series":"game","Midnight Cowboy (1969)":"drama","Misery (1990)":"horror","Moana (2016)":"cartoon","Monty Python and the Holy Grail (1975)":"comedy","Monty Python's Flying Circus (1969)":"comedy","Monty Python's Flying Circus (TV series)":"comedy","Monty Python's Life of Brian (1979)":"comedy","Moonstruck (1987)":"comedy","Mortal Kombat (1992)":"game","Mulan (1998)":"cartoon","Naruto (2002)":"toon","Network (1976)":"drama","Night of the Living Dead (1968)":"horror","Oklahoma! (1955)":"drama","On the Waterfront (1954)":"drama","Peter Pan (1953)":"cartoon","Pinocchio (1940)":"cartoon","Pirates of the Caribbean series":"fantasy","Pirates of the Caribbean: At World's End (2007)":"fantasy","Pirates of the Caribbean: Dead Man's Chest (2006)":"fantasy","Pirates of the Caribbean: The Curse of the Black Pearl (2003)":"fantasy","Planet of the Apes (1968)":"scifi","Pocahontas (1995)":"cartoon","Pokemon (1996)":"toon","Pokemon Red and Blue (1996)":"game","Pokemon series":"toon","Poltergeist (1982)":"horror","Portal (2007)":"game","Power Rangers (1993)":"toon","Predator (1987)":"scifi","Psycho (1960)":"horror","Pulp Fiction (1994)":"action","Raiders of the Lost Ark (1981)":"fantasy","Reservoir Dogs (1992)":"action","Rise of the Planet of the Apes (2011)":"scifi","Rocky (1976)":"sport","Rocky Balboa (2006)":"sport","Rocky III (1982)":"sport","Rocky IV (1985)":"sport","Rogue One (2016)":"scifi","Rugrats (1991)":"toon","Rush Hour (1998)":"action","Scarface (1983)":"action","Shang-Chi and the Legend of the Ten Rings (2021)":"hero","She Done Him Wrong (1933)":"comedy","Shrek (2001)":"cartoon","Shrek 2 (2004)":"cartoon","Shrek Forever After (2010)":"cartoon","Snow White and the Seven Dwarfs (1937)":"cartoon","Some Like It Hot (1959)":"comedy","Sonic X (2003)":"toon","South Pacific (1958)":"drama","Spider-Man (2002)":"hero","Spider-Man 2 (2004)":"hero","Spider-Man: Homecoming (2017)":"hero","Spider-Man: No Way Home (2021)":"hero","SpongeBob SquarePants (1999)":"toon","Star Fox 64 (1997)":"game","Star Trek (1966)":"scifi","Star Trek (TV intro, 1966)":"scifi","Star Trek (TV series intro, 1966)":"scifi","Star Trek II: The Wrath of Khan (1982)":"scifi","Star Trek: First Contact (1996)":"scifi","Star Trek: The Next Generation (TV series)":"scifi","Star Wars: A New Hope (1977)":"scifi","Star Wars: Attack of the Clones (2002)":"scifi","Star Wars: Knights of the Old Republic II (2004)":"game","Star Wars: Return of the Jedi (1983)":"scifi","Star Wars: Revenge of the Sith (2005)":"scifi","Star Wars: The Empire Strikes Back (1980)":"scifi","Star Wars: The Force Awakens (2015)":"scifi","Star Wars: The Last Jedi (2017)":"scifi","Star Wars: The Phantom Menace (1999)":"scifi","StarCraft (1998)":"game","StarCraft II (2010)":"game","Sudden Impact (1983)":"action","Super Mario 64 (1996)":"game","Super Mario Bros. (1985)":"game","Super Mario franchise":"game","Superman (1978)":"dc","Taxi Driver (1976)":"action","Teen Titans (2003)":"toon","Teenage Mutant Ninja Turtles (1990)":"toon","Terminator 2: Judgment Day (1991)":"scifi","The A-Team (TV series)":"action","The Adventures of Sherlock Holmes (1939)":"drama","The American President (1995)":"drama","The Avengers (2012)":"hero","The Big Lebowski (1998)":"comedy","The Dark Knight (2008)":"dc","The Dark Knight Rises (2012)":"dc","The Day the Earth Stood Still (1951)":"scifi","The Elder Scrolls V: Skyrim (2011)":"game","The Emperor's New Groove (2000)":"cartoon","The Fairly OddParents (2001)":"toon","The Falcon and the Winter Soldier (2021)":"hero","The Fly (1986)":"scifi","The Godfather (1972)":"action","The Godfather Part II (1974)":"action","The Godfather Part III (1990)":"action","The Graduate (1967)":"drama","The Hunger Games (2012)":"fantasy","The Hunger Games series":"fantasy","The Hunger Games: Catching Fire (2013)":"fantasy","The Hunger Games: Mockingjay Part 1 (2014)":"fantasy","The Hunger Games: Mockingjay Part 2 (2015)":"fantasy","The Jungle Book (1967)":"cartoon","The Karate Kid (1984)":"sport","The Legend of Zelda (1986)":"game","The Legend of Zelda series":"game","The Legend of Zelda: Ocarina of Time (1998)":"game","The Lion King (1994)":"cartoon","The Lion King II: Simba's Pride (1998)":"cartoon","The Little Mermaid (1989)":"cartoon","The Lord of the Rings: The Fellowship of the Ring (2001)":"fantasy","The Lord of the Rings: The Return of the King (2003)":"fantasy","The Lord of the Rings: The Two Towers (2002)":"fantasy","The Lost World: Jurassic Park (1997)":"scifi","The Maltese Falcon (1941)":"drama","The Mandalorian (2019)":"scifi","The Matrix (1999)":"scifi","The Matrix Reloaded (2003)":"scifi","The Matrix Revolutions (2003)":"scifi","The Muppet Movie (1979)":"cartoon","The Oregon Trail (1971)":"game","The Road to El Dorado (2000)":"cartoon","The Sandlot (1993)":"sport","The Shawshank Redemption (1994)":"drama","The Shining (1980)":"horror","The Silence of the Lambs (1991)":"horror","The Sixth Sense (1999)":"horror","The Sound of Music (1965)":"drama","The Terminator (1984)":"scifi","The Treasure of the Sierra Madre (1948)":"drama","The Wizard of Oz (1939)":"drama","The Wolverine (2013)":"hero","The World Is Not Enough (1999)":"action","The X-Files (TV series)":"scifi","They Live (1988)":"scifi","Thor (2011)":"hero","Thor: Ragnarok (2017)":"hero","Titanic (1997)":"drama","Top Gun (1986)":"action","Toy Story (1995)":"cartoon","Toy Story 2 (1999)":"cartoon","True Romance (1993)":"action","Undertale (2015)":"game","Up (2009)":"cartoon","Victorious (2010)":"toon","W.I.T.C.H. (2005)":"toon","Wall Street (1987)":"action","WandaVision (2021)":"hero","Warcraft III (2002)":"game","When Harry Met Sally (1989)":"comedy","Winx Club (2004)":"toon","World of Warcraft series":"game","World of Warcraft: The Burning Crusade (2007)":"game","X-Men (2000)":"hero","X-Men Origins: Wolverine (2009)":"hero","X-Men: Evolution (2000)":"toon","X-Men: First Class (2011)":"hero","X-Men: The Last Stand (2006)":"hero","Zero Wing (1989)":"game","iCarly (2007)":"toon"};
+let qCatSel = null;                 // null — экран выбора, иначе id категории
+function quoteCatOf(id){
+  if(id >= CUSTOM_QUOTE_BASE) return 'mine';
+  const q = QUOTES[id]; return (q && QUOTE_SRC_CAT[q[3]]) || 'other';
+}
+function quoteHasCats(){ return targetLang === 'ru'; }
+function quoteIdsIn(cat){
+  const ids = activeQuoteIds();
+  if(cat === 'all') return ids;
+  if(cat === 'star') return ids.filter(id => quoteStarred.has(id));
+  return ids.filter(id => quoteCatOf(id) === cat);
+}
+function shortTitle(src){ return String(src).replace(/\s*\(.*?\)\s*$/, '').split(/:| \/ | Part | \d+$| II| Vol\./)[0].replace(/^The /, '').replace(/'s Flying Circus|'s Life of Brian| and the Holy Grail/, '').trim(); }
+function renderQuotePick(){
+  const ids = activeQuoteIds(), by = {}, films = {};
+  for(const id of ids){
+    const c = quoteCatOf(id); by[c] = (by[c] || 0) + 1;
+    if(c !== 'mine'){ const t = shortTitle(getQuote(id).movie); (films[c] = films[c] || {})[t] = ((films[c] || {})[t] || 0) + 1; }
+  }
+  const top = c => Object.entries(films[c] || {}).sort((a, b) => b[1] - a[1]).slice(0, 3).map(x => x[0]).join(', ');
+  const row = (key, e, name, n, sub, cls) => n ? `<button class="th${cls ? ' ' + cls : ''}" data-qc="${key}"><span class="e">${e}</span>
+    <span class="m"><span class="n">${escHtml(name)}<span>${n}</span></span>${sub ? `<span class="sub">${escHtml(sub)}</span>` : ''}</span>
+    <span class="ar">›</span></button>` : '';
+  const stars = ids.filter(id => quoteStarred.has(id)).length;
+  const cats = QUOTE_CATS.filter(c => by[c.id]).sort((a, b) => (a.id === 'other') - (b.id === 'other'));
+  $('qPick').innerHTML = `
+    <div class="t-card w-list">
+      ${row('all', '🎲', 'Все цитаты вперемешку', ids.length, '', 'all')}
+      ${row('star', '⭐', 'Избранные', stars, '')}
+      ${row('mine', '✍️', 'Мои цитаты', by.mine || 0, '')}
+    </div>
+    <div class="t-sec">Категории</div>
+    <div class="t-card w-list">${cats.map(c => row(c.id, c.emoji, c.name, by[c.id], top(c.id))).join('')}</div>`;
+  $('qPick').querySelectorAll('[data-qc]').forEach(b => b.addEventListener('click', () => openQuoteCat(b.dataset.qc)));
+}
+function quoteCatLabel(cat){
+  if(cat === 'all') return '🎬 Цитаты';
+  if(cat === 'star') return '⭐ Избранные';
+  if(cat === 'mine') return '✍️ Мои цитаты';
+  const c = QUOTE_CATS.find(x => x.id === cat); return c ? c.emoji + ' ' + c.name : '🎬 Цитаты';
+}
+function openQuoteCat(cat){
+  const ids = quoteIdsIn(cat); if(!ids.length) return;
+  qCatSel = cat;
+  qDeck = shuffle(ids); qPos = 0; qFlipped = false;
+  $('viewQuotes').classList.remove('picking');
+  $('quotesTitle').textContent = quoteCatLabel(cat);
+  $('quotesCount').textContent = qDeck.length + ' ' + plural(qDeck.length, 'цитата', 'цитаты', 'цитат');
+  $('btnQuotesBack').textContent = '← Категории';
+  showQuote();
+}
+function showQuotePick(){
+  qCatSel = null;
+  $('viewQuotes').classList.add('picking');
+  $('quotesTitle').textContent = '🎬 Цитаты';
+  const n = activeQuoteIds().length;
+  $('quotesCount').textContent = n + ' ' + plural(n, 'цитата', 'цитаты', 'цитат');
+  $('btnQuotesBack').textContent = '← Практика';
+  renderQuotePick();
+  window.scrollTo(0, 0);
+}
+
 let qDeck = [];
 let qPos = 0;
 let qFlipped = false;
 function openQuotes(){
+  if(quoteHasCats()){ showView('quotes'); showQuotePick(); return; }
+  qCatSel = null;
+  $('viewQuotes').classList.remove('picking');
+  $('quotesTitle').textContent = '🎬 Цитаты';
+  $('btnQuotesBack').textContent = '← Практика';
   qDeck = shuffle(activeQuoteIds());
   qPos = 0;
   qFlipped = false;
@@ -4983,7 +5082,7 @@ $('btnBackupRestore').addEventListener('click', async ()=>{
   }
 });
 $('actQuotes').addEventListener('click', openQuotes);
-$('btnQuotesBack').addEventListener('click', ()=>showTab('acts'));
+$('btnQuotesBack').addEventListener('click', ()=>{ if(quoteHasCats() && qCatSel !== null) showQuotePick(); else showTab('acts'); });
 $('btnQuotesNext').addEventListener('click', nextQuote);
 $('btnQuotesShuffle').addEventListener('click', ()=>{ qDeck = shuffle(qDeck); qPos = 0; showQuote(); });
 $('starBtnQuote').addEventListener('click', e => { e.stopPropagation(); toggleStarQuote(); });
@@ -5039,10 +5138,11 @@ $('qlist').addEventListener('click', e => {
 });
 document.addEventListener('keydown', e => {
   if($('viewQuotes').classList.contains('active')){
+    if($('viewQuotes').classList.contains('picking')){ if(e.code === 'Escape') showTab('acts'); return; }
     if(e.code === 'Space' || e.code === 'Enter'){ e.preventDefault(); flipQuote(); }
     else if(e.code === 'ArrowRight'){ nextQuote(); }
     else if(e.code === 'KeyS'){ speakQuote(); }
-    else if(e.code === 'Escape'){ showView('menu'); }
+    else if(e.code === 'Escape'){ $('btnQuotesBack').click(); }
     return;
   }
   if(!$('viewStudy').classList.contains('active')) return;
