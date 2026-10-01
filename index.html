@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>flashcards-imba</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="favicon.png" sizes="32x32">
@@ -11,23 +11,37 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Карточки">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#2C4A3E">
+<meta name="theme-color" content="#241A44">
 <meta name="description" content="Карточки для изучения английского, немецкого и французского.">
 <style>
   :root{
-    --board:#2C4A3E;
-    --chalk:#EAF2EC;
-    --chalk-dim:rgba(234,242,236,.62);
+    /* Фон фиолетовый, а всё, что про прогресс, остаётся зелёным —
+       так зелёный перестал сливаться с фоном и снова что-то значит. */
+    --board:#2A1E4A;
+    --board-top:#352761;
+    --board-bot:#171130;
+    --chalk:#EDEAF6;
+    --chalk-dim:rgba(237,234,246,.62);
     --paper:#FDFBF2;
     --paper-line:#C6D8E8;
     --margin-red:#E05B4E;
     --ink:#22293B;
     --ink-soft:#6B7385;
     --accent:#E05B4E;
-    --know:#3E7D5C;
+    --know:#3E9668;        /* зелёный прогресса */
+    --know-lite:#7FC79B;
   }
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  /* Никаких зумов: ни двойным тапом, ни щипком. pan-x pan-y оставляет прокрутку,
+     но отбирает у браузера масштабирование. Safari вдобавок глушится обработчиками
+     gesture* в скрипте — он намеренно игнорирует user-scalable=no. */
+  html{touch-action:pan-x pan-y}
+  body{touch-action:pan-x pan-y;overscroll-behavior:none}
   html,body{height:100%}
+  /* Поле со шрифтом меньше 16px заставляет iOS приблизить страницу при фокусе. */
+  @media (pointer:coarse){
+    input,textarea,select{font-size:16px !important}
+  }
   html{background:var(--board)}
   body{
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
@@ -41,10 +55,9 @@
   body::before{
     content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
     background:
-      linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,0) 45%),
-      radial-gradient(130% 85% at 50% -10%, rgba(255,255,255,.035), transparent 65%),
-      radial-gradient(140% 95% at 50% 112%, rgba(0,0,0,.26), transparent 60%),
-      var(--board);
+      radial-gradient(120% 70% at 50% -8%, rgba(167,139,250,.22), transparent 62%),
+      radial-gradient(130% 80% at 50% 112%, rgba(0,0,0,.35), transparent 58%),
+      linear-gradient(180deg, var(--board-top), var(--board-bot));
   }
 
   .view{position:relative;z-index:1;display:none;flex-direction:column;align-items:center;
@@ -81,7 +94,7 @@
     font:700 13px/1 inherit;letter-spacing:.03em;cursor:pointer;transition:.18s}
   .levels button:hover{background:rgba(234,242,236,.1);color:var(--chalk)}
   .levels button.active{background:var(--chalk);color:#22322B;border-color:var(--chalk)}
-  .levels button[data-lvl="1"].active{background:#B39DDB;color:#3B2E52;border-color:#B39DDB}
+  .levels button[data-lvl="1"].active{background:#67E8F9;color:#0E3B44;border-color:#67E8F9}
   .levels button[data-lvl="2"].active{background:#7EB6F5;color:#1F3A5C;border-color:#7EB6F5}
   .levels button[data-lvl="3"].active{background:#34C471;color:#0F3D24;border-color:#34C471}
   .levels button[data-lvl="4"].active{background:#FFC929;color:#5C4400;border-color:#FFC929}
@@ -138,6 +151,7 @@
   .theme .bar i{display:block;height:100%;background:#7FC79B;border-radius:99px;transition:width .3s}
   .theme.all .right{flex:1;display:flex;flex-direction:column;gap:6px}
   .theme.done-badge .nm::after{content:" ✓";color:#7FC79B}
+  .theme.fav-on{border-color:#FFD24C;background:rgba(255,210,76,.14)}
 
   .overall-progress{width:100%;margin-bottom:16px}
   .op-label{font-size:12.5px;color:var(--chalk-dim);text-align:center;margin-bottom:6px}
@@ -344,13 +358,83 @@
   #confirmNo{background:rgba(34,41,59,.08);color:var(--ink)}
   #confirmNo:hover{background:rgba(34,41,59,.15)}
 
-  .gear-btn{position:absolute;top:14px;right:14px;z-index:5;appearance:none;border:0;cursor:pointer;
-    width:42px;height:42px;border-radius:13px;background:rgba(234,242,236,.12);color:var(--chalk);
-    font-size:19px;line-height:1;display:flex;align-items:center;justify-content:center;
-    transition:.18s;box-shadow:0 2px 8px rgba(0,0,0,.18)}
-  .gear-btn:hover{background:rgba(234,242,236,.24);transform:rotate(25deg)}
+  /* ================= ВКЛАДКИ ================= */
+  .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:50;display:flex;
+    background:rgba(20,14,42,.86);backdrop-filter:blur(14px);
+    border-top:1px solid rgba(237,234,246,.12);
+    padding:8px 0 calc(8px + env(safe-area-inset-bottom))}
+  .tabbar button{flex:1;appearance:none;border:0;background:transparent;cursor:pointer;
+    color:var(--chalk-dim);font:600 10.5px/1 inherit;padding:4px 2px;transition:.15s}
+  .tabbar button i{display:block;font-style:normal;font-size:20px;margin-bottom:4px;
+    opacity:.65;transition:.15s;line-height:1}
+  .tabbar button.on{color:var(--know-lite)}
+  .tabbar button.on i{opacity:1;transform:translateY(-1px)}
+  body.has-tabs .view{padding-bottom:92px}
+  .tabbar.hidden{display:none}
+
+  /* ================= ГЛАВНАЯ ================= */
+  .home-body{width:100%;display:flex;flex-direction:column;gap:12px}
+  .h-card,.h-cont,.h-stat{background:rgba(253,251,242,.07);border:1px solid rgba(253,251,242,.14);
+    border-radius:16px;padding:14px}
+  .h-card h4{font-size:11.5px;color:var(--chalk-dim);font-weight:700;letter-spacing:.05em;
+    text-transform:uppercase;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+  .h-cnt{font-weight:600;letter-spacing:0;text-transform:none;color:var(--know-lite)}
+  .h-cont{background:linear-gradient(135deg,rgba(62,150,104,.3),rgba(62,150,104,.12));
+    border-color:rgba(127,199,155,.4)}
+  .h-meta{font-size:12.5px;color:var(--chalk-dim);margin-bottom:4px}
+  .h-big{font-size:20px;font-weight:700;margin-bottom:12px}
+  .h-go{appearance:none;border:0;cursor:pointer;width:100%;background:var(--know);color:#fff;
+    border-radius:11px;padding:13px;font:700 15px/1 inherit;transition:.15s}
+  .h-go:hover{filter:brightness(1.12)}
+  .h-two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .h-stat{text-align:center}
+  .h-stat .n{font-size:27px;font-weight:800;color:var(--know-lite);line-height:1.1;font-variant-numeric:tabular-nums}
+  .h-stat .l{font-size:11.5px;color:var(--chalk-dim);margin-top:3px}
+  .h-lrow{display:flex;align-items:center;gap:9px;margin-bottom:9px}
+  .h-lrow:last-of-type{margin-bottom:0}
+  .h-fl{font-size:17px;width:24px;flex:none;text-align:center}
+  .h-bar{flex:1;height:8px;border-radius:99px;background:rgba(0,0,0,.32);overflow:hidden}
+  .h-bar i{display:block;height:100%;border-radius:99px;
+    background:linear-gradient(90deg,var(--know),var(--know-lite));transition:width .4s}
+  .h-pc{font-size:12px;color:var(--chalk-dim);width:36px;text-align:right;font-variant-numeric:tabular-nums}
+  .h-tot{font-size:12.5px;color:var(--chalk-dim);margin-top:11px;
+    border-top:1px solid rgba(237,234,246,.1);padding-top:9px}
+  .h-tot b{color:var(--know-lite);font-size:14px}
+  .h-hrow{display:flex;align-items:center;gap:9px;font-size:13.5px}
+  .h-empty{font-size:13px;color:var(--chalk-dim);font-style:italic}
+  .ach-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+  .ach{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;
+    opacity:.3;filter:grayscale(1);transition:.2s}
+  .ach.got{opacity:1;filter:none}
+  .ach-em{font-size:24px;line-height:1}
+  .ach-nm{font-size:9.5px;color:var(--chalk-dim);line-height:1.15}
+  .ach.got .ach-nm{color:var(--chalk)}
+
+  /* ================= ПРАКТИКА ================= */
+  .acts{width:100%;display:flex;flex-direction:column;gap:10px}
+  .act{appearance:none;cursor:pointer;text-align:left;display:flex;align-items:center;gap:13px;
+    background:rgba(253,251,242,.07);border:1px solid rgba(253,251,242,.14);border-radius:16px;
+    padding:15px;color:var(--chalk);font:inherit;transition:.15s;width:100%}
+  .act:hover{background:rgba(253,251,242,.13)}
+  .act.soon{opacity:.45;cursor:default;border-style:dashed}
+  .act-em{font-size:27px;flex:none}
+  .act-tx{display:flex;flex-direction:column;gap:3px}
+  .act-tx b{font-size:15.5px}
+  .act-tx i{font-style:normal;font-size:12.5px;color:var(--chalk-dim);line-height:1.35}
+  .act.hidden{display:none}
 
   /* ================= НАСТРОЙКИ ================= */
+  .set-link{appearance:none;border:0;cursor:pointer;background:transparent;width:100%;
+    display:flex;justify-content:space-between;align-items:center;color:var(--chalk);
+    font:600 14.5px/1 inherit;padding:12px 0;border-bottom:1px solid rgba(237,234,246,.1);transition:.15s}
+  .set-link:last-child{border-bottom:0}
+  .set-link:hover{color:var(--know-lite)}
+  .set-link b{color:var(--chalk-dim);font-weight:600;font-size:13px}
+  .set-link b::after{content:" →"}
+  .version-panel{padding-top:14px;padding-bottom:14px}
+  .ver-row{display:flex;justify-content:space-between;align-items:center;
+    font-size:13.5px;color:var(--chalk-dim);padding:4px 0}
+  .ver-row b{color:var(--chalk);font-variant-numeric:tabular-nums}
   .set-row{display:flex;gap:6px;flex-wrap:wrap}
   .set-row button{appearance:none;cursor:pointer;font:600 14px/1 inherit;
     border:1.5px solid rgba(234,242,236,.3);background:transparent;color:var(--chalk-dim);
@@ -461,8 +545,7 @@
   .hr-btns .ghost{background:transparent;color:var(--chalk);border:1.5px solid rgba(234,242,236,.4)}
   .hr-btns .ghost:hover{background:rgba(234,242,236,.12);filter:none}
 
-  .app-copyright{text-align:center;padding:22px 16px 18px;
-    font-size:11px;color:rgba(234,242,236,.35);letter-spacing:.02em}
+
   #addMsg.err{color:#F2A196}
 
   .filters{width:100%;display:flex;gap:8px;margin-bottom:10px}
@@ -517,10 +600,28 @@
 </head>
 <body>
   <!-- ================= ЭКРАН ТЕМ ================= -->
-  <div class="view active" id="viewMenu">
-    <button class="gear-btn" id="btnSettings" title="Настройки" aria-label="Настройки">⚙️</button>
+  <!-- ================= ГЛАВНАЯ ================= -->
+  <div class="view" id="viewHome">
     <div class="menu-title">Flashcards</div>
-    <div class="menu-sub">карточки для запоминания · 6 уровней, <span id="subTotal">5660</span> слов</div>
+    <div id="homeBody" class="home-body"></div>
+  </div>
+
+  <!-- ================= ПРАКТИКА ================= -->
+  <div class="view" id="viewActs">
+    <div class="menu-title">Практика</div>
+    <div class="acts">
+      <button class="act" id="actQuotes"><span class="act-em">🎬</span>
+        <span class="act-tx"><b>Цитаты из фильмов</b><i id="actQuotesSub">—</i></span></button>
+      <button class="act" id="actHill"><span class="act-em">⛰️</span>
+        <span class="act-tx"><b>Царь горы</b><i>10 уровней, 3 жизни. Пока только английский</i></span></button>
+      <button class="act" id="actWrite"><span class="act-em">✍️</span>
+        <span class="act-tx"><b>Напиши слово</b><i>Набрать слово по переводу</i></span></button>
+      <div class="act soon"><span class="act-em">📖</span>
+        <span class="act-tx"><b>Книги и главы</b><i>Тексты с пропущенными словами — скоро</i></span></div>
+    </div>
+  </div>
+
+  <div class="view" id="viewMenu">
     <div class="langs" id="langs">
       <button data-lang="ru" class="active" title="Английский" aria-label="Английский">🇬🇧</button>
       <button data-lang="de" title="Немецкий" aria-label="Немецкий">🇩🇪</button>
@@ -542,26 +643,7 @@
       <div class="ls-track"><div class="ls-knob"></div></div>
       <span class="ls-side ls-target">🇷🇺 RU</span>
     </div>
-    <div class="icon-row">
-      <div class="quotes-link" id="quotesLink">
-        <button id="btnQuotes" title="Цитаты">🎬</button>
-      </div>
-      <div class="quotes-link" id="writeLink">
-        <button id="btnWriteOpen" title="Напиши слово (RU → язык)">✍️</button>
-      </div>
-      <div class="quotes-link" id="hillLink">
-        <button id="btnHill" title="Царь горы">⛰️</button>
-      </div>
-      <div class="quotes-link">
-        <button id="btnLvlStar" class="star-section" data-lvl="star" title="Избранное">★</button>
-      </div>
-
-    </div>
-    <div class="total-line">Уровень <b id="levelLabel">1</b> · режим <b id="modeLabel">ENG → RUS</b>: выучено <b id="totalLearned">0</b> из <b id="totalWords">0</b></div>
-    <div class="overall-progress" id="overallProgress">
-      <div class="op-label">Весь словарь: <b id="opPercent">0%</b> выучено (<span id="opCount">0 из 0</span>)</div>
-      <div class="bar"><i id="opBar" style="width:0%"></i></div>
-    </div>
+    <div class="total-line">Уровень <b id="levelLabel">1</b> · <b id="modeLabel">ENG → RUS</b> · выучено <b id="totalLearned">0</b> из <b id="totalWords">0</b></div>
     <div class="edit-link" id="editLink" style="display:none"><button id="btnEdit">📝 Мои слова: добавить / удалить</button></div>
     <div class="grid" id="grid"></div>
 
@@ -808,10 +890,7 @@
 
   <!-- ================= НАСТРОЙКИ ================= -->
   <div class="view" id="viewSettings">
-    <div class="edit-head">
-      <button class="back-btn" id="btnSetBack">← Темы</button>
-      <div class="edit-title">⚙️ Настройки</div>
-    </div>
+    <div class="menu-title">Настройки</div>
 
     <div class="panel">
       <h3>Шаг прогресса</h3>
@@ -832,6 +911,17 @@
       <h3>Царь горы</h3>
       <p class="backup-hint">Таймер на ответ. Время сжимается по мере подъёма.</p>
       <div class="set-row" id="setHillTimer"></div>
+    </div>
+
+    <div class="panel">
+      <h3>Моё</h3>
+      <button class="set-link" id="setMyWords"><span>📝 Мои слова</span><b id="setMyWordsN">0</b></button>
+      <button class="set-link" id="setQuoteEd"><span>🎬 Редактор цитат</span><b id="setQuoteEdN">0</b></button>
+    </div>
+
+    <div class="panel version-panel">
+      <div class="ver-row"><span>Версия приложения</span><b id="appVerLabel">—</b></div>
+      <div class="ver-row"><span>Формат данных</span><b id="appSchemaLabel">—</b></div>
     </div>
 
     <div class="panel">
@@ -889,6 +979,13 @@
       <div id="storageInfo" class="backup-hint"></div>
     </div>
   </div>
+
+  <nav class="tabbar" id="tabbar">
+    <button data-tab="home"><i>🏠</i>Главная</button>
+    <button data-tab="learn"><i>📚</i>Учить</button>
+    <button data-tab="acts"><i>🎯</i>Практика</button>
+    <button data-tab="settings"><i>⚙️</i>Настройки</button>
+  </nav>
 
   <!-- ================= МОДАЛЬНОЕ ОКНО ПОДТВЕРЖДЕНИЯ ================= -->
   <div class="confirm-overlay" id="confirmOverlay">
@@ -1106,8 +1203,8 @@ if('speechSynthesis' in window){
 // Контент (WORDS_*/QUOTES_*/EXAMPLES_*) — это код приложения, его можно менять когда угодно.
 // Прогресс — данные пользователя: он живёт отдельно, привязан к стабильным ID карточек
 // и НИКОГДА не перезаписывается при обновлении приложения.
-const APP_VERSION    = 'v150';
-const SCHEMA_VERSION = 5;
+const APP_VERSION    = '2.0.1';
+const SCHEMA_VERSION = 6;
 const OLD_TS = 1;   // «неизвестная древность»: метка для данных, перенесённых со старого формата
 
 // Префикс ID = честное имя языка. Внутренний код 'ru' исторически означает английский,
@@ -1170,7 +1267,7 @@ const customQuoteId = (code, text) => 'q:' + LANG_ID[code] + ':#' + hash8(String
 function emptyDoc(){
   return { schemaVersion: SCHEMA_VERSION, progress:{}, quotes:{}, customWords:{},
            customQuotes:{}, settings:{}, stats:{ days:{} },
-           games:{ hill:{ records:{}, runs:0 } }, _seq:0 };
+           games:{ hill:{ records:{}, runs:0 } }, achievements:{}, _seq:0 };
 }
 let DOC = emptyDoc();
 
@@ -1257,6 +1354,13 @@ function mergeDocs(a, b){
   out.settings = mergeSettings(a.settings, b.settings);
   out.stats    = mergeStats(a.stats, b.stats);
   out.games    = mergeGames(a.games, b.games);
+  // Достижение, раз полученное, не отнимается: объединяем и берём самую раннюю дату.
+  out.achievements = {};
+  for(const k of new Set([...Object.keys(a.achievements || {}), ...Object.keys(b.achievements || {})])){
+    const x = (a.achievements || {})[k] || {}, y = (b.achievements || {})[k] || {};
+    const ts = [x.t, y.t].filter(Boolean);
+    out.achievements[k] = { t: ts.length ? Math.min(...ts) : Date.now() };
+  }
   out._seq     = Math.max(a._seq || 0, b._seq || 0);
   return out;
 }
@@ -1280,6 +1384,7 @@ function migrateDoc(raw){
   if(!out.games || typeof out.games !== 'object') out.games = {};
   if(!out.games.hill || typeof out.games.hill !== 'object') out.games.hill = { records:{}, runs:0 };
   if(!out.games.hill.records) out.games.hill.records = {};
+  if(!out.achievements || typeof out.achievements !== 'object') out.achievements = {};
   // Схема 5: прогресс слова переехал со ступеней 1–5 на проценты 0–100.
   // Умножаем на 20 — «выучено» (5) становится 100%, ничего не теряется.
   if(v > 0 && v < 5){
@@ -1636,6 +1741,7 @@ function buildDoc(){
   for(const sec of ['progress','quotes','customWords','customQuotes']) doc[sec] = doc[sec] || {};
   doc.settings = doc.settings || {}; doc.stats = doc.stats || { days:{} }; doc.stats.days = doc.stats.days || {};
   doc.games = doc.games || { hill:{ records:{}, runs:0 } };
+  doc.achievements = doc.achievements || {};
 
   // метка времени ставится ТОЛЬКО когда значение реально изменилось
   const setF = (bag, id, f, val) => {
@@ -1973,17 +2079,7 @@ function renderMenu(){
   $('levelLabel').textContent = showingFavorites ? '★' : level;
   $('totalWords').textContent = allIds.length;
   $('totalLearned').textContent = learnedCount;
-  updateQuotesButtonCount();
-  $('writeLink').classList.toggle('hidden', !hasData); // игра «Напиши слово» — только когда есть данные
   $('editLink').style.display = showingFavorites ? '' : 'none'; // «Мои слова» показываем только в разделе Избранное
-
-  const st = $('subTotal');
-  if(st) st.textContent = WORDS.length;
-  const op = overallProgress();
-  const opPct = op.total ? Math.round(op.learned / op.total * 100) : 0;
-  $('opPercent').textContent = opPct + '%';
-  $('opCount').textContent = `${op.learned} из ${op.total}`;
-  $('opBar').style.width = opPct + '%';
 
   const grid = $('grid');
   grid.innerHTML = '';
@@ -1997,8 +2093,17 @@ function renderMenu(){
       <span class="cnt">${learnedCount} / ${allIds.length} выучено</span>
       ${mkBar(learnedCount, allIds.length)}
     </span>`;
-  allBtn.addEventListener('click', ()=>openTheme(-1));
+  allBtn.addEventListener('click', ()=>{ if(showingFavorites) setLevel(level); openTheme(-1); });
   grid.appendChild(allBtn);
+
+  const favCount = new Set([...starred, ...customs.map(c => c.id)]).size;
+  const favBtn = document.createElement('button');
+  favBtn.className = 'theme' + (showingFavorites ? ' fav-on' : '') + (favCount ? '' : ' theme-empty');
+  favBtn.innerHTML = `<span class="em">⭐</span>
+    <span class="nm">Избранное</span>
+    <span class="cnt">${favCount} ${plural(favCount,'слово','слова','слов')}</span>`;
+  favBtn.addEventListener('click', ()=>{ showingFavorites ? openTheme(-1) : showFavoritesLevel(); });
+  grid.appendChild(favBtn);
 
   if(!hasData){
     const note = document.createElement('div');
@@ -2023,7 +2128,24 @@ function renderMenu(){
     grid.appendChild(b);
   });
 }
+// Экраны-вкладки: у них внизу панель. Остальные — «вглубь», панель прячется.
+const TAB_VIEWS = { home:'home', learn:'menu', acts:'acts', settings:'settings' };
+let curTab = 'home';
+function showTab(tab){
+  curTab = tab;
+  showView(TAB_VIEWS[tab]);
+}
+function paintTabs(name){
+  const tabOf = { home:'home', menu:'learn', acts:'acts', settings:'settings' }[name];
+  const bar = $('tabbar');
+  bar.classList.toggle('hidden', !tabOf);
+  document.body.classList.toggle('has-tabs', !!tabOf);
+  if(tabOf){ curTab = tabOf; }
+  for(const b of bar.querySelectorAll('button')) b.classList.toggle('on', b.dataset.tab === (tabOf || curTab));
+}
 function showView(name){
+  $('viewHome').classList.toggle('active', name === 'home');
+  $('viewActs').classList.toggle('active', name === 'acts');
   $('viewMenu').classList.toggle('active', name === 'menu');
   $('viewStudy').classList.toggle('active', name === 'study');
   $('viewWrite').classList.toggle('active', name === 'write');
@@ -2035,9 +2157,21 @@ function showView(name){
   $('viewSettings').classList.toggle('active', name === 'settings');
   if(name === 'settings') renderSettings();
   if(name !== 'hill'){ hillStopTimer(); hillRun = null; hillBusy = false; }
+  paintTabs(name);
+  if(name === 'home'){ renderHome(); }
+  if(name === 'acts'){ renderActs(); }
   if(name === 'menu'){ theme = -1; renderMenu(); }
   if(name === 'edit'){ theme = -1; renderList(); }
   if(name === 'qedit'){ qEditPage = 0; renderQuoteList(); }
+  try{ window.scrollTo(0, 0); }catch(e){}
+}
+function renderActs(){
+  const q = LANG_QUOTES[targetLang] || [];
+  $('actQuotes').classList.toggle('hidden', q.length === 0);
+  $('actQuotesSub').textContent = q.length
+    ? q.length + ' ' + plural(q.length, 'цитата', 'цитаты', 'цитат') + ' · ' + LANGUAGES.find(l => l.code === targetLang).label
+    : '';
+  $('actHill').classList.toggle('hidden', targetLang !== 'ru');
 }
 
 // ================= УЧЁБА =================
@@ -2231,8 +2365,7 @@ function masterWord(){
 function setMode(m){
   mode = m;
   $('langSwitch').classList.toggle('re', m === 'RE');
-  $('quotesLink').classList.toggle('hidden', !LANG_QUOTES[targetLang] || LANG_QUOTES[targetLang].length === 0);
-  $('hillLink').classList.toggle('hidden', targetLang !== 'ru');   // «Царь горы» пока только для английского // цитаты доступны, если есть пак для языка
+  renderActs();
   saveAll();
   renderMenu(); // у каждого режима свой прогресс — обновляем цифры
 }
@@ -2276,8 +2409,7 @@ function setLang(code){
   $('lsSourceLabel').textContent = `${lang.sourceFlag} ${lang.sourceLabel}`;
   for(const b of document.querySelectorAll('#levels button'))
     b.classList.toggle('active', b.dataset.lvl === String(level));
-  $('quotesLink').classList.toggle('hidden', !LANG_QUOTES[targetLang] || LANG_QUOTES[targetLang].length === 0);
-  $('hillLink').classList.toggle('hidden', targetLang !== 'ru');   // «Царь горы» пока только для английского
+  renderActs();
   fillCatSelects(); // темы редактора слов теперь свои для этого языка
   saveAll();
   renderMenu();
@@ -2287,8 +2419,7 @@ function setLang(code){
 function paintLevelButtons(){
   for(const b of document.querySelectorAll('#levels button'))
     b.classList.toggle('active', !showingFavorites && b.dataset.lvl === String(level));
-  const st = $('btnLvlStar');
-  if(st) st.classList.toggle('active', showingFavorites);
+
 }
 function setLevel(n){
   if(n < 1 || n > LEVELS) return;
@@ -2632,8 +2763,7 @@ function updateQuoteField(id, field, value){
   saveAll();
 }
 function updateQuotesButtonCount(){
-  const n = activeQuoteIds().length;
-  $('btnQuotes').title = `Цитаты (${n})`;
+  if($('viewActs').classList.contains('active')) renderActs();
 }
 let qEditPage = 0;
 const Q_PAGE_SIZE = 100;
@@ -3318,9 +3448,147 @@ function renderSettings(){
     hillTimerMode = b.dataset.t; saveAll(); renderSettings();
   }));
 
+  $('appVerLabel').textContent = APP_VERSION;
+  $('appSchemaLabel').textContent = SCHEMA_VERSION;
+  $('setMyWordsN').textContent = customs.length;
+  $('setQuoteEdN').textContent = activeQuoteIds().length;
   $('setAutoSpeak').checked = autoSpeak;
   $('setHintOpen').checked = hintOpen;
   $('setWide').checked = wideLayout;
+}
+
+
+// ================= ДОСТИЖЕНИЯ =================
+// Считаются из данных, которые уже копятся: прогресс по словам, дни занятий,
+// рекорды «Царя горы». Момент получения запоминается, чтобы ачивка не «терялась»,
+// если прогресс потом сбросили.
+const ACHIEVEMENTS = [
+  { id:'first10',  em:'🌱', name:'Первые шаги', hint:'10 выученных слов',        test:s => s.learned >= 10 },
+  { id:'w100',     em:'💯', name:'Сотня',       hint:'100 выученных слов',       test:s => s.learned >= 100 },
+  { id:'w500',     em:'📚', name:'Пятьсот',     hint:'500 выученных слов',       test:s => s.learned >= 500 },
+  { id:'w1000',    em:'🏛️', name:'Тысяча',      hint:'1000 выученных слов',      test:s => s.learned >= 1000 },
+  { id:'lvlDone',  em:'🎓', name:'Уровень взят',hint:'все слова одного уровня',  test:s => s.levelDone },
+  { id:'streak7',  em:'🔥', name:'Неделя',      hint:'7 дней подряд',            test:s => s.streak >= 7 },
+  { id:'streak30', em:'⚡', name:'Месяц',       hint:'30 дней подряд',           test:s => s.streak >= 30 },
+  { id:'day50',    em:'🚀', name:'Марафон',     hint:'50 слов за один день',     test:s => s.bestDay >= 50 },
+  { id:'hillTop',  em:'👑', name:'Царь горы',   hint:'полный подъём на гору',    test:s => s.crown },
+  { id:'polyglot', em:'🌍', name:'Полиглот',    hint:'слова в трёх языках',      test:s => s.langs >= 3 }
+];
+
+// Сводка по всем языкам сразу — на ней держатся и ачивки, и виджеты главной.
+function overallStats(){
+  let learned = 0, langs = 0, levelDone = false;
+  const perLang = [];
+  for(const L of LANGUAGES){
+    const code = L.code, W = LANG_WORDS[code] || [];
+    const st = learnedByLang[code], hid = hiddenByLang[code];
+    let done = 0, total = 0;
+    const byLvl = {};
+    for(let i = 0; i < W.length; i++){
+      if(hid.has(i)) continue;
+      const lv = W[i][3];
+      byLvl[lv] = byLvl[lv] || { d:0, t:0 };
+      byLvl[lv].t++; total++;
+      if((st.ER[i] || 0) >= KNOW_MAX || (st.RE[i] || 0) >= KNOW_MAX){ done++; byLvl[lv].d++; }
+    }
+    for(const lv in byLvl) if(byLvl[lv].t > 0 && byLvl[lv].d === byLvl[lv].t) levelDone = true;
+    if(done > 0) langs++;
+    learned += done;
+    perLang.push({ code, flag:L.flag, done, total, pct: total ? Math.round(done / total * 100) : 0 });
+  }
+  const days = (DOC.stats && DOC.stats.days) || {};
+  let bestDay = 0;
+  for(const d in days) bestDay = Math.max(bestDay, days[d].n || 0);
+  const recs = (DOC.games && DOC.games.hill && DOC.games.hill.records) || {};
+  let crown = false, bestHill = null;
+  for(const k in recs){
+    if(recs[k].crown) crown = true;
+    if(!bestHill || (recs[k].level || 0) > (bestHill.level || 0)) bestHill = { key:k, ...recs[k] };
+  }
+  return { learned, langs, levelDone, streak: streakDays(), bestDay, crown, bestHill, perLang,
+           today: todayCount };
+}
+
+// Помечает новые ачивки и возвращает список с датами получения.
+function achievementState(){
+  const s = overallStats();
+  DOC.achievements = DOC.achievements || {};
+  let changed = false;
+  const out = ACHIEVEMENTS.map(a => {
+    const had = DOC.achievements[a.id];
+    let got = !!had;
+    if(!had && a.test(s)){ DOC.achievements[a.id] = { t: Date.now() }; got = true; changed = true; }
+    return { ...a, got, at: (DOC.achievements[a.id] || {}).t || 0 };
+  });
+  if(changed) saveAll();
+  return { list: out, stats: s };
+}
+
+// ================= ГЛАВНАЯ =================
+const HILL_PRESET_NAMES = { warmup:'Разминка', level:'Один уровень', climb:'Восхождение',
+                            weak:'Слабые места', hardcore:'Хардкор' };
+function hillRecordTitle(key){
+  if(key.indexOf('level:') === 0) return 'Один уровень · ' + ['A1','A2','B1','B2','C1','C2'][+key.slice(6) - 1];
+  return HILL_PRESET_NAMES[key] || key;
+}
+function renderHome(){
+  const { list, stats } = achievementState();
+  const langInfo = LANGUAGES.find(l => l.code === targetLang);
+  const ids = activeIds(-1);
+  const left = ids.filter(i => !isMastered(i)).length;
+  const lvlName = showingFavorites ? 'избранное' : ['A1','A2','B1','B2','C1','C2'][level - 1];
+
+  const langRows = stats.perLang.map(p => `
+    <div class="h-lrow">
+      <span class="h-fl">${p.flag}</span>
+      <div class="h-bar"><i style="width:${p.pct}%"></i></div>
+      <span class="h-pc">${p.pct}%</span>
+    </div>`).join('');
+
+  const gotCount = list.filter(a => a.got).length;
+  const achRow = list.map(a => `
+    <div class="ach${a.got ? ' got' : ''}" title="${escAttr(a.name)} — ${escAttr(a.hint)}">
+      <span class="ach-em">${a.em}</span>
+      <span class="ach-nm">${escHtml(a.name)}</span>
+    </div>`).join('');
+
+  const hill = stats.bestHill && stats.bestHill.level
+    ? `<div class="h-hrow"><span class="h-fl">${stats.crown ? '👑' : '⛰️'}</span>
+         <div>${escHtml(hillRecordTitle(stats.bestHill.key))} — <b>${stats.bestHill.level}/10</b>${
+           stats.bestHill.score ? ', ' + stats.bestHill.score + ' очков' : ''}</div></div>`
+    : `<div class="h-empty">Ещё не поднимался. Вкладка «Практика».</div>`;
+
+  $('homeBody').innerHTML = `
+    <div class="h-cont">
+      <div class="h-meta">${langInfo.flag} ${escHtml(langInfo.label === 'EN' ? 'Английский' : langInfo.label === 'DE' ? 'Немецкий' : 'Французский')} · уровень ${lvlName}</div>
+      <div class="h-big">${left ? 'Осталось ' + left + ' ' + plural(left, 'слово', 'слова', 'слов') : 'Здесь всё выучено 🎉'}</div>
+      <button class="h-go" id="homeGo">${left ? 'Продолжить учить →' : 'Выбрать другой уровень →'}</button>
+    </div>
+
+    <div class="h-two">
+      <div class="h-stat"><div class="n">${stats.streak}</div><div class="l">${plural(stats.streak,'день','дня','дней')} подряд 🔥</div></div>
+      <div class="h-stat"><div class="n">${stats.today}</div><div class="l">${plural(stats.today,'слово','слова','слов')} сегодня</div></div>
+    </div>
+
+    <div class="h-card">
+      <h4>Прогресс по языкам</h4>
+      ${langRows}
+      <div class="h-tot">Всего выучено: <b>${stats.learned}</b></div>
+    </div>
+
+    <div class="h-card">
+      <h4>Достижения <span class="h-cnt">${gotCount} из ${list.length}</span></h4>
+      <div class="ach-grid">${achRow}</div>
+    </div>
+
+    <div class="h-card">
+      <h4>Царь горы</h4>
+      ${hill}
+    </div>`;
+
+  $('homeGo').addEventListener('click', () => {
+    if(left) openTheme(-1); else showTab('learn');
+  });
 }
 
 // ================= СОБЫТИЯ =================
@@ -3342,7 +3610,7 @@ $('btnShuffle').addEventListener('click', ()=>{ buildDeck(); showCard(); });
 $('starBtnStudy').addEventListener('click', e => { e.stopPropagation(); toggleStarWord(); });
 $('btnResetTheme').addEventListener('click', resetTheme);
 $('btnRestartTheme').addEventListener('click', resetTheme);
-$('btnBack').addEventListener('click', ()=>showView('menu'));
+$('btnBack').addEventListener('click', ()=>showTab('learn'));
 $('btnDoneBack').addEventListener('click', ()=>showView('menu'));
 $('btnResetAll').addEventListener('click', resetAll);
 $('langSwitch').addEventListener('click', ()=>setMode(mode === 'ER' ? 'RE' : 'ER'));
@@ -3353,12 +3621,11 @@ for(const b of document.querySelectorAll('#langs button[data-lang]'))
   b.addEventListener('click', ()=>setLang(b.dataset.lang));
 for(const b of document.querySelectorAll('#levels button'))
   b.addEventListener('click', ()=>setLevel(+b.dataset.lvl));
-$('btnLvlStar').addEventListener('click', showFavoritesLevel);
 $('btnEdit').addEventListener('click', ()=>showView('edit'));
 $('btnQuotesEdit').addEventListener('click', ()=>showView('qedit'));
-$('btnWriteOpen').addEventListener('click', openWrite);
-$('btnWriteBack').addEventListener('click', ()=>showView('menu'));
-$('btnWriteDoneBack').addEventListener('click', ()=>showView('menu'));
+$('actWrite').addEventListener('click', openWrite);
+$('btnWriteBack').addEventListener('click', ()=>showTab('acts'));
+$('btnWriteDoneBack').addEventListener('click', ()=>showTab('acts'));
 $('btnWriteRestart').addEventListener('click', ()=>{ buildWriteDeck(); showWriteWord(); });
 $('btnWriteShuffle').addEventListener('click', ()=>{ writeDeck = shuffle(writeDeck); writePos = 0; showWriteWord(); });
 $('btnWriteKnow').addEventListener('click', knowWrite);
@@ -3372,7 +3639,7 @@ $('writeThemeSelect').addEventListener('change', e => {
 $('writeInput').addEventListener('keydown', e => {
   if(e.key === 'Enter'){ e.preventDefault(); writeAction(); }
 });
-$('btnQEditBack').addEventListener('click', ()=>showView('menu'));
+$('btnQEditBack').addEventListener('click', ()=>showTab('acts'));
 $('btnBackup').addEventListener('click', ()=>{
   showView('backup');
   $('backupFileMsg').textContent = '';
@@ -3385,13 +3652,15 @@ $('btnBackup').addEventListener('click', ()=>{
   $('backupRestoreMsg').classList.remove('error');
 });
 $('btnBackupBack').addEventListener('click', ()=>showView('settings'));
-$('btnHill').addEventListener('click', hillOpen);
-$('btnSettings').addEventListener('click', ()=>showView('settings'));
-$('btnSetBack').addEventListener('click', ()=>showView('menu'));
+$('actHill').addEventListener('click', hillOpen);
+$('setMyWords').addEventListener('click', ()=>{ showingFavorites = true; paintLevelButtons(); showView('edit'); });
+$('setQuoteEd').addEventListener('click', ()=>showView('qedit'));
+for(const b of $('tabbar').querySelectorAll('button'))
+  b.addEventListener('click', ()=>showTab(b.dataset.tab));
 $('setAutoSpeak').addEventListener('change', e => { autoSpeak = e.target.checked; saveAll(); });
 $('setHintOpen').addEventListener('change', e => { hintOpen = e.target.checked; saveAll(); if(deck.length) render(); });
 $('setWide').addEventListener('change', e => { wideLayout = e.target.checked; applyWide(); saveAll(); });
-$('btnHillBack').addEventListener('click', ()=>showView('menu'));
+$('btnHillBack').addEventListener('click', ()=>showTab('acts'));
 $('btnExportFile').addEventListener('click', ()=>{
   try{
     const blob = new Blob([exportProgressJson()], {type:'application/json'});
@@ -3436,6 +3705,7 @@ function onRemoteChange(){
     $('langSwitch').classList.toggle('re', mode === 'RE');
     for(const b of document.querySelectorAll('#langs button')) b.classList.toggle('active', b.dataset.lang === targetLang);
     paintLevelButtons();
+    if($('viewHome').classList.contains('active')) renderHome();
     if($('viewMenu').classList.contains('active')) renderMenu();
     if($('viewEdit').classList.contains('active')) renderList();
     if($('viewQEdit').classList.contains('active')) renderQuoteList();
@@ -3485,14 +3755,14 @@ $('btnBackupRestore').addEventListener('click', async ()=>{
     $('backupRestoreMsg').classList.add('error');
   }
 });
-$('btnQuotes').addEventListener('click', openQuotes);
-$('btnQuotesBack').addEventListener('click', ()=>showView('menu'));
+$('actQuotes').addEventListener('click', openQuotes);
+$('btnQuotesBack').addEventListener('click', ()=>showTab('acts'));
 $('btnQuotesNext').addEventListener('click', nextQuote);
 $('btnQuotesShuffle').addEventListener('click', ()=>{ qDeck = shuffle(qDeck); qPos = 0; showQuote(); });
 $('starBtnQuote').addEventListener('click', e => { e.stopPropagation(); toggleStarQuote(); });
 $('qCard').addEventListener('click', flipQuote);
 $('qSpk').addEventListener('click', e => { e.stopPropagation(); speakQuote(); });
-$('btnEditBack').addEventListener('click', ()=>showView('menu'));
+$('btnEditBack').addEventListener('click', ()=>showTab('settings'));
 $('btnAdd').addEventListener('click', addWord);
 $('btnImportToggle').addEventListener('click', () => {
   const body = $('importBody');
@@ -3557,6 +3827,20 @@ document.addEventListener('keydown', e => {
   else if(e.code === 'Escape'){ showView('menu'); }
 });
 
+// ================= ЗАПРЕТ МАСШТАБИРОВАНИЯ =================
+// Safari на iOS с десятой версии намеренно игнорирует user-scalable=no,
+// поэтому щипок глушим его же событиями жестов.
+(function noZoom(){
+  for(const ev of ['gesturestart','gesturechange','gestureend'])
+    document.addEventListener(ev, e => e.preventDefault(), { passive:false });
+  // Двойной тап глушится через touch-action в стилях. Вручную его перехватывать нельзя:
+  // preventDefault на втором касании отменяет и клик, а в «Царе горы» отвечают быстро.
+  // Двумя пальцами по экрану тоже ничего не масштабируем.
+  document.addEventListener('touchmove', e => {
+    if(e.touches && e.touches.length > 1) e.preventDefault();
+  }, { passive:false });
+})();
+
 // ================= ЗАПУСК =================
 (async function init(){
   await loadAll();
@@ -3566,10 +3850,8 @@ document.addEventListener('keydown', e => {
   $('lsSourceLabel').textContent = `${langInfo.sourceFlag} ${langInfo.sourceLabel}`;
   for(const b of document.querySelectorAll('#langs button'))
     b.classList.toggle('active', b.dataset.lang === targetLang);
-  $('quotesLink').classList.toggle('hidden', !LANG_QUOTES[targetLang] || LANG_QUOTES[targetLang].length === 0);
-  $('hillLink').classList.toggle('hidden', targetLang !== 'ru');   // «Царь горы» пока только для английского
+  renderActs();
   paintLevelButtons();
-  $('appVerLabel').textContent = APP_VERSION;
   try{
     if('serviceWorker' in navigator && location.protocol.indexOf('http') === 0){
       const reg = await navigator.serviceWorker.register('./sw.js').catch(()=>null);
@@ -3581,9 +3863,8 @@ document.addEventListener('keydown', e => {
       }
     }
   }catch(e){}
-  renderMenu();
+  showTab('home');
 })();
 </script>
-  <div class="app-copyright">© 2026 Sergey Sachko. Все права защищены. <span id="appVerLabel"></span></div>
 </body>
 </html>
