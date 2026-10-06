@@ -1,10 +1,11 @@
 // Service worker приложения «flashcards-imba».
 //
 // Он кэширует ТОЛЬКО файлы приложения: страницу, манифест, иконки.
-// localStorage и IndexedDB, где лежит весь прогресс, service worker
-// не видит в принципе и никогда не трогает. Обновление приложения
-// не может задеть прогресс.
-const CACHE = 'fc-shell-3.3.1';
+// Прогресс (localStorage и запись 'doc' в IndexedDB) service worker не читает
+// и никогда не трогает — обновление приложения не может задеть прогресс.
+// Единственное, что он читает, — крошечную запись 'remind' (время напоминания
+// и занимался ли сегодня), чтобы на Android показать напоминание в фоне.
+const CACHE = 'fc-shell-3.15.1';
 const SHELL = [
   './', './index.html', './manifest.webmanifest',
   './icon-192.png', './icon-512.png', './icon-maskable-512.png', './icon-180.png', './favicon.png'
@@ -54,3 +55,47 @@ self.addEventListener('fetch', e => {
 });
 
 self.addEventListener('message', e => { if (e.data === 'skipWaiting') self.skipWaiting(); });
+
+// ---- Напоминание (Android, установленное приложение: Periodic Background Sync) ----
+function kv(key, val) {
+  return new Promise(res => {
+    try {
+      const r = indexedDB.open('fcdb', 1);
+      r.onupgradeneeded = () => { try { r.result.createObjectStore('kv'); } catch (e) { } };
+      r.onerror = () => res(null);
+      r.onsuccess = () => {
+        try {
+          const db = r.result, tx = db.transaction('kv', val === undefined ? 'readonly' : 'readwrite');
+          const st = tx.objectStore('kv'), q = val === undefined ? st.get(key) : st.put(val, key);
+          q.onsuccess = () => res(val === undefined ? q.result : true);
+          q.onerror = () => res(null);
+        } catch (e) { res(null); }
+      };
+    } catch (e) { res(null); }
+  });
+}
+const dayKey = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+async function remindCheck() {
+  let st = null;
+  try { st = JSON.parse((await kv('remind')) || 'null'); } catch (e) { }
+  if (!st || !st.on) return;
+  const now = new Date(), today = dayKey(now);
+  const [hh, mm] = String(st.time || '20:00').split(':').map(n => +n || 0);
+  if (now.getHours() * 60 + now.getMinutes() < hh * 60 + mm) return;   // ещё рано
+  if (st.studied === today) return;                                     // сегодня уже занимался
+  if ((await kv('remind-shown')) === today) return;                     // уже напоминали
+  await kv('remind-shown', today);
+  const n = st.cards || 0;
+  const body = n ? 'Сегодня ' + n + ' карточ' + (n % 10 === 1 && n % 100 !== 11 ? 'ка' : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? 'ки' : 'ек') + ' — это пара минут.'
+                 : 'Загляни на пару минут — слова любят повторение.';
+  await self.registration.showNotification((st.name || 'Лекси') + ' скучает 🌱', { body, icon: 'icon-192.png', badge: 'icon-192.png', tag: 'fc-remind' });
+}
+self.addEventListener('periodicsync', e => { if (e.tag === 'fc-remind') e.waitUntil(remindCheck()); });
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  e.waitUntil((async () => {
+    const all = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const c of all) { if ('focus' in c) return c.focus(); }
+    return self.clients.openWindow('./');
+  })());
+});
