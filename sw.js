@@ -5,7 +5,7 @@
 // и никогда не трогает — обновление приложения не может задеть прогресс.
 // Единственное, что он читает, — крошечную запись 'remind' (время напоминания
 // и занимался ли сегодня), чтобы на Android показать напоминание в фоне.
-const CACHE = 'fc-shell-3.15.1';
+const CACHE = 'fc-shell-3.24.0';
 const SHELL = [
   './', './index.html', './manifest.webmanifest',
   './icon-192.png', './icon-512.png', './icon-maskable-512.png', './icon-180.png', './favicon.png'
